@@ -1,0 +1,113 @@
+syntax = "proto3";
+
+package vm.v1;
+
+// VirtualMachineService provides operations for managing Virtual Machines
+service VirtualMachineService {
+  // Creates a new Virtual Machine
+  rpc CreateVirtualMachine(CreateVirtualMachineRequest) returns (CreateVirtualMachineResponse);
+  
+  // Lists existing Virtual Machines
+  rpc ListVirtualMachines(ListVirtualMachinesRequest) returns (ListVirtualMachinesResponse);
+}
+
+// Request message for creating a Virtual Machine
+message CreateVirtualMachineRequest {
+  // The region identifier
+  string region = 1;
+  
+  // The size identifier (required)
+  string size = 2;
+  
+  // The image identifier (required)
+  string image = 3;
+  
+  // SSH key fingerprints to embed in the VM
+  repeated string ssh_keys = 4;
+  
+  // Enable automated backups
+  bool backups = 5;
+  
+  // Enable IPv6
+  bool ipv6 = 6;
+  
+  // Install monitoring agent
+  bool monitoring = 7;
+  
+  // Tags to apply to the VM
+  repeated string tags = 8;
+}
+
+// Response message for creating a Virtual Machine
+message CreateVirtualMachineResponse {
+  VirtualMachine virtual_machine = 1;
+}
+
+// Request message for listing Virtual Machines
+message ListVirtualMachinesRequest {
+  // Maximum number of VMs to return
+  int32 page_size = 1;
+  
+  // Token for pagination
+  string page_token = 2;
+  
+  // Filter by tag
+  string tag = 3;
+  
+  // Filter by region
+  string region = 4;
+}
+
+// Response message for listing Virtual Machines
+message ListVirtualMachinesResponse {
+  // List of Virtual Machines
+  repeated VirtualMachine virtual_machines = 1;
+  
+  // Token for next page
+  string next_page_token = 2;
+  
+  // Total count of VMs
+  int32 total_count = 3;
+}
+
+// Virtual Machine resource representation
+message VirtualMachine {
+  // Unique identifier
+  int32 id = 1;
+  
+  // VM name
+  string name = 2;
+  
+  // Memory in MB
+  int32 memory = 3;
+  
+  // Number of vCPUs
+  int32 vcpus = 4;
+  
+  // Disk size in GB
+  int32 disk = 5;
+  
+  // Current status
+  string status = 6;
+  
+  // Region
+  string region = 7;
+  
+  // Image
+  string image = 8;
+  
+  // Size
+  string size = 9;
+  
+  // IP address
+  string ip_address = 10;
+  
+  // Tags applied to the VM
+  repeated string tags = 11;
+  
+  // Creation timestamp
+  string created_at = 12;
+  
+  // Monthly price
+  double price_monthly = 13;
+}
