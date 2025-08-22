@@ -6,23 +6,19 @@ import vmService from "./connect.js";
 async function main() {
   const server = fastify();
 
-  // Add CORS support for web clients
   await server.register(cors, {
-    origin: true, // Allow all origins in development
+    origin: true,
     credentials: true,
   });
 
-  // Register Connect plugin
   await server.register(fastifyConnectPlugin, {
     routes: vmService,
   });
 
-  // Health check endpoint
   server.get("/health", async () => {
     return { status: "ok", timestamp: new Date().toISOString() };
   });
 
-  // Start the server
   const port = parseInt("8080");
   const host = "localhost";
 
