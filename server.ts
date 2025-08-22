@@ -1,19 +1,38 @@
 import { fastify } from "fastify";
 import { fastifyConnectPlugin } from "@connectrpc/connect-fastify";
-import routes from "./connect.js";
+import cors from "@fastify/cors";
+import vmService from "./connect.js";
 
 async function main() {
   const server = fastify();
+
+  // Add CORS support for web clients
+  await server.register(cors, {
+    origin: true, // Allow all origins in development
+    credentials: true,
+  });
+
+  // Register Connect plugin
   await server.register(fastifyConnectPlugin, {
-    routes,
+    routes: vmService,
   });
-  server.get("/", (_, reply) => {
-    reply.type("text/plain");
-    reply.send("Hello World!");
+
+  // Health check endpoint
+  server.get("/health", async () => {
+    return { status: "ok", timestamp: new Date().toISOString() };
   });
-  await server.listen({ host: "localhost", port: 8080 });
-  console.log("server is listening at", server.addresses());
+
+  // Start the server
+  const port = parseInt("8080");
+  const host = "localhost";
+
+  try {
+    await server.listen({ port, host });
+    console.log(`VM Service running on http://${host}:${port}`);
+    console.log(`Health check: http://${host}:${port}/health`);
+  } catch (err) {
+    server.log.error(err);
+  }
 }
-// You can remove the main() wrapper if you set type: module in your package.json,
-// and update your tsconfig.json with target: es2017 and module: es2022.
-void main();
+
+main().catch(console.error);
