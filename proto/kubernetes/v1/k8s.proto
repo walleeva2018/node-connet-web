@@ -1,0 +1,107 @@
+syntax = "proto3";
+
+package kubernetes.v1;
+
+option go_package = "github.com/api/kubernetes/v1";
+
+// CreateClusterRequest represents the request to create a Kubernetes cluster
+message CreateClusterRequest {
+  // Name of the Kubernetes cluster
+  string name = 1;
+  
+  // Region where the cluster will be created (e.g., "nyc1", "sfo2")
+  string region = 2;
+  
+  // Kubernetes version (e.g., "1.14.1-do.4")
+  string version = 3;
+  
+  // Tags associated with the cluster
+  repeated string tags = 4;
+  
+  // Node pools configuration
+  repeated NodePool node_pools = 5;
+}
+
+// NodePool defines a group of nodes with similar configuration
+message NodePool {
+  // Droplet size for nodes in this pool (e.g., "s-1vcpu-2gb", "c-4")
+  string size = 1;
+  
+  // Number of nodes in this pool
+  int32 count = 2;
+  
+  // Name of the node pool
+  string name = 3;
+  
+  // Tags associated with this node pool
+  repeated string tags = 4;
+  
+  // Labels to apply to nodes in this pool
+  map<string, string> labels = 5;
+}
+
+// CreateClusterResponse represents the response from cluster creation
+message CreateClusterResponse {
+  // The created cluster information
+  Cluster cluster = 1;
+}
+
+// ListClustersRequest represents the request to list Kubernetes clusters
+message ListClustersRequest {
+  // Optional: filter by region
+  string region = 1;
+  
+  // Optional: filter by tags
+  repeated string tags = 2;
+}
+
+// ListClustersResponse represents the response containing multiple clusters
+message ListClustersResponse {
+  // List of clusters
+  repeated Cluster clusters = 1;
+  
+  // Total count of clusters
+  int32 total_count = 2;
+}
+
+// Cluster represents a Kubernetes cluster
+message Cluster {
+  // Unique identifier for the cluster
+  string id = 1;
+  
+  // Name of the cluster
+  string name = 2;
+  
+  // Region where the cluster is located
+  string region = 3;
+  
+  // Kubernetes version
+  string version = 4;
+  
+  // Cluster endpoint URL
+  string endpoint = 5;
+  
+  // Current status of the cluster
+  string status = 6;
+  
+  // Creation timestamp
+  string created_at = 7;
+  
+  // Last update timestamp
+  string updated_at = 8;
+  
+  // Tags associated with the cluster
+  repeated string tags = 9;
+  
+  // Node pools in this cluster
+  repeated NodePool node_pools = 10;
+}
+
+// Service definition for Kubernetes cluster management
+service KubernetesClusterService {
+  // Creates a new Kubernetes cluster
+  rpc CreateCluster(CreateClusterRequest) returns (CreateClusterResponse);
+  
+  // Lists all Kubernetes clusters
+  rpc ListClusters(ListClustersRequest) returns (ListClustersResponse);
+}

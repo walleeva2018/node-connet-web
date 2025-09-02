@@ -2,6 +2,7 @@ import { fastify } from "fastify";
 import { fastifyConnectPlugin } from "@connectrpc/connect-fastify";
 import cors from "@fastify/cors";
 import vmService from "./connect.js";
+import k8s from "./k8s.js";
 
 async function main() {
   const server = fastify();
@@ -13,6 +14,10 @@ async function main() {
 
   await server.register(fastifyConnectPlugin, {
     routes: vmService,
+  });
+
+  await server.register(fastifyConnectPlugin, {
+    routes: k8s,
   });
 
   server.get("/health", async () => {
