@@ -15,6 +15,7 @@ const projects: Array<{
   uuid: string;
   ownerUuid: string;
   ownerId: number;
+  ownerName: string;
   name: string;
   description: string;
   purpose: string;
@@ -23,7 +24,50 @@ const projects: Array<{
   imageUri: string;
   createdAt: string;
   updatedAt: string;
-}> = [];
+}> = [
+  {
+    uuid: "550e8400-e29b-41d4-a716-446655440001",
+    ownerUuid: "550e8400-e29b-41d4-a716-446655440010",
+    ownerId: 1,
+    ownerName: "john_doe",
+    name: "Web Application",
+    description: "Main production web application",
+    purpose: "production",
+    environment: "prod",
+    isDefault: true,
+    imageUri: "https://via.placeholder.com/300x200?text=Web%20Application",
+    createdAt: "2024-01-15T10:30:00.000Z",
+    updatedAt: "2024-01-15T14:20:00.000Z",
+  },
+  {
+    uuid: "550e8400-e29b-41d4-a716-446655440002",
+    ownerUuid: "550e8400-e29b-41d4-a716-446655440011",
+    ownerId: 2,
+    ownerName: "sarah_smith",
+    name: "API Development",
+    description: "Backend API development environment",
+    purpose: "development",
+    environment: "dev",
+    isDefault: false,
+    imageUri: "https://via.placeholder.com/300x200?text=API%20Development",
+    createdAt: "2024-01-14T09:15:00.000Z",
+    updatedAt: "2024-01-14T16:45:00.000Z",
+  },
+  {
+    uuid: "550e8400-e29b-41d4-a716-446655440003",
+    ownerUuid: "550e8400-e29b-41d4-a716-446655440012",
+    ownerId: 3,
+    ownerName: "mike_johnson",
+    name: "Mobile App",
+    description: "Mobile application for iOS and Android",
+    purpose: "testing",
+    environment: "staging",
+    isDefault: false,
+    imageUri: "https://via.placeholder.com/300x200?text=Mobile%20App",
+    createdAt: "2024-01-13T14:20:00.000Z",
+    updatedAt: "2024-01-13T18:30:00.000Z",
+  },
+];
 
 export default function (router: ConnectRouter) {
   router.service(ProjectService, {
@@ -32,6 +76,7 @@ export default function (router: ConnectRouter) {
         uuid: generateUUID(),
         ownerUuid: generateUUID(),
         ownerId: 1,
+        ownerName: "John Doe", // Default owner name, in real app get from auth context
         name: request.name,
         description: request.description || "",
         purpose: request.purpose || "development",
