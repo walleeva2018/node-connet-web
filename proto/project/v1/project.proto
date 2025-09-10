@@ -1,0 +1,94 @@
+syntax = "proto3";
+
+package project;
+
+// Project entity
+message Project {
+  string uuid = 1;
+  string owner_uuid = 2;
+  int32 owner_id = 3;
+  string name = 4;
+  string description = 5;
+  string purpose = 6;
+  string environment = 7;
+  bool is_default = 8;
+  string image_uri = 9;
+  string created_at = 10;
+  string updated_at = 11;
+  // Using google.protobuf.Struct for flexible resources field
+  // or you can define a specific Resources message if needed
+  optional Resources resources = 12;
+}
+
+// Resources message (define based on your actual structure)
+message Resources {
+  // Add specific resource fields here based on your requirements
+  // For now keeping it flexible
+  map<string, string> properties = 1;
+}
+
+// Request messages
+message CreateProjectRequest {
+  string name = 1;
+  optional string description = 2;
+  optional string purpose = 3;
+  optional string environment = 4;
+  optional bool is_default = 5;
+}
+
+message GetProjectRequest {
+  string uuid = 1;
+}
+
+message UpdateProjectRequest {
+  string uuid = 1;
+  optional string name = 2;
+  optional string description = 3;
+  optional string purpose = 4;
+  optional string environment = 5;
+  optional bool is_default = 6;
+}
+
+message DeleteProjectRequest {
+  string uuid = 1;
+}
+
+message ListProjectsRequest {
+  optional int32 page_size = 1;
+  optional string page_token = 2;
+  optional string owner_uuid = 3;
+  optional string environment = 4;
+}
+
+// Response messages
+message CreateProjectResponse {
+  Project project = 1;
+}
+
+message GetProjectResponse {
+  Project project = 1;
+}
+
+message UpdateProjectResponse {
+  Project project = 1;
+}
+
+message DeleteProjectResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message ListProjectsResponse {
+  repeated Project projects = 1;
+  string next_page_token = 2;
+  int32 total_count = 3;
+}
+
+// Service definition
+service ProjectService {
+  rpc CreateProject(CreateProjectRequest) returns (CreateProjectResponse);
+  rpc GetProject(GetProjectRequest) returns (GetProjectResponse);
+  rpc UpdateProject(UpdateProjectRequest) returns (UpdateProjectResponse);
+  rpc DeleteProject(DeleteProjectRequest) returns (DeleteProjectResponse);
+  rpc ListProjects(ListProjectsRequest) returns (ListProjectsResponse);
+}
