@@ -1,0 +1,175 @@
+syntax = "proto3";
+package organization.v1;
+
+// Organization service for managing organizations
+service OrganizationService {
+  // Create a new organization
+  rpc CreateOrganization(CreateOrganizationRequest) returns (CreateOrganizationResponse);
+
+  // Get organization details
+  rpc GetOrganization(GetOrganizationRequest) returns (GetOrganizationResponse);
+
+  // List all organizations
+  rpc ListOrganizations(ListOrganizationsRequest) returns (ListOrganizationsResponse);
+
+  // Update organization
+  rpc UpdateOrganization(UpdateOrganizationRequest) returns (UpdateOrganizationResponse);
+
+  // Delete organization
+  rpc DeleteOrganization(DeleteOrganizationRequest) returns (DeleteOrganizationResponse);
+}
+
+// Enums for organization configuration
+enum OrgOnboardingStep {
+  ORG_ONBOARDING_STEP_UNSPECIFIED = 0;
+  ORG_ONBOARDING_STEP_CONFIRMED = 1;
+  ORG_ONBOARDING_STEP_ESTABLISHED = 2;
+  ORG_ONBOARDING_STEP_COMPLETED = 3;
+}
+
+enum OrganizationStatus {
+  ORGANIZATION_STATUS_UNSPECIFIED = 0;
+  ORGANIZATION_STATUS_OK = 1;
+  ORGANIZATION_STATUS_SUSPENDED = 2;
+  ORGANIZATION_STATUS_DELETED = 3;
+}
+
+enum Role {
+  ROLE_UNSPECIFIED = 0;
+  ROLE_OWNER = 1;
+  ROLE_MEMBER = 2;
+  ROLE_VIEWER = 3;
+}
+
+enum PaymentTerms {
+  PAYMENT_TERMS_UNSPECIFIED = 0;
+  PAYMENT_TERMS_TOS = 1;
+  PAYMENT_TERMS_CUSTOM = 2;
+}
+
+enum AuthenticationStatus {
+  AUTHENTICATION_STATUS_UNSPECIFIED = 0;
+  AUTHENTICATION_STATUS_AUTHENTICATED = 1;
+  AUTHENTICATION_STATUS_PENDING = 2;
+  AUTHENTICATION_STATUS_FAILED = 3;
+}
+
+// Subject role information
+message SubjectRole {
+  string uuid = 1;
+  string name = 2;
+  string description = 3;
+}
+
+// Authentication information
+message Authentication {
+  AuthenticationStatus status = 1;
+  repeated string current_methods = 2;
+  repeated string required_methods = 3;
+}
+
+// Organization representation
+message Organization {
+  int64 id = 1;
+  string uuid = 2;
+  string contact_email = 3;
+  string email_confirmed_at = 4;  // ISO 8601 timestamp
+  string email_verified_at = 5;   // ISO 8601 timestamp
+  string name = 6;
+  string display_name = 7;
+  string location = 8;
+  string phone_number = 9;
+  int32 droplet_limit = 10;
+  OrgOnboardingStep org_onboarding_step = 11;
+  bool newsletter_subscribed = 12;
+  string balance = 13;  // Decimal string representation
+  string usage_total = 14;  // Decimal string representation
+  int32 droplet_count = 15;
+  bool can_be_deleted = 16;
+  bool in_bad_standing = 17;
+  OrganizationStatus status = 18;
+  string avatar_initials = 19;
+  int32 avatar_color = 20;
+  bool tfa_enabled = 21;
+  bool is_archived = 22;
+  bool is_hold = 23;
+  bool is_verified = 24;
+  bool is_paypal = 25;
+  bool is_partner = 26;
+  bool is_wire_transfer_eligible = 27;
+  bool requires_secure_login = 28;
+  string payment_method = 29;
+  string company = 30;
+  bool is_trial = 31;
+  Role role = 32;
+  SubjectRole subject_role = 33;
+  bool converted_personal_account = 34;
+  bool is_ach_debit_eligible = 35;
+  bool is_achwire_only = 36;
+  PaymentTerms payment_terms = 37;
+  Authentication authentication = 38;
+  string description = 39;
+  string website_url = 40;
+}
+
+// Request/Response messages
+message CreateOrganizationRequest {
+  string name = 1;
+  string display_name = 2;
+  string description = 3;
+  string website_url = 4;
+}
+
+message CreateOrganizationResponse {
+  Organization organization = 1;
+}
+
+message GetOrganizationRequest {
+    string id = 1;
+}
+
+message GetOrganizationResponse {
+  Organization organization = 1;
+}
+
+message ListOrganizationsRequest {
+  int32 page_size = 1;
+  string page_token = 2;
+  // Optional filters
+  OrganizationStatus status = 3;
+  Role role = 4;
+  bool is_trial = 5;
+  bool is_verified = 6;
+}
+
+message ListOrganizationsResponse {
+  repeated Organization organizations = 1;
+  string next_page_token = 2;
+  int32 total_count = 3;
+}
+
+message UpdateOrganizationRequest {
+  string uuid = 1;
+  // Fields to update (using field masks in practice)
+  string  display_name = 2;
+  string  description = 3;
+  string  website_url = 4;
+  string phone_number = 5;
+  string company = 6;
+  bool newsletter_subscribed = 7;
+  int32 droplet_limit = 8;
+  bool tfa_enabled = 9;
+}
+
+message UpdateOrganizationResponse {
+  Organization organization = 1;
+}
+
+message DeleteOrganizationRequest {
+  string uuid = 1;
+}
+
+message DeleteOrganizationResponse {
+  bool success = 1;
+  string message = 2;
+}
