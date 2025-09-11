@@ -163,12 +163,9 @@ message CreateTeamResponse {
 }
 
 message GetTeamRequest {
-  oneof identifier {
-    int64 id = 1;
-    string uuid = 2;
-  }
-  bool include_members = 3;
-  bool include_organization = 4;
+  string team_id = 1;
+  bool include_members = 2;
+  bool include_organization = 3;
 }
 
 message GetTeamResponse {
@@ -177,14 +174,14 @@ message GetTeamResponse {
 
 message ListTeamsRequest {
   string organization_uuid = 1;  // Filter by organization
-  int32 page_size = 2;
-  string page_token = 3;
+  optional int32 page_size = 2;
+  optional string page_token = 3;
   
   // Filters
-  TeamType type = 4;
-  TeamPermission permission = 5;
-  bool is_active = 6;
-  bool include_members = 7;
+  optional TeamType type = 4;
+  optional TeamPermission permission = 5;
+  optional bool is_active = 6;
+  optional bool include_members = 7;
 }
 
 message ListTeamsResponse {
