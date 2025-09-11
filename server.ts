@@ -6,6 +6,7 @@ import k8s from "./k8s.js";
 import user from "./user.js";
 import organization from "./organization.js";
 import project from "./project.js";
+import team from "./team.js";
 
 async function main() {
   const server = fastify();
@@ -33,6 +34,9 @@ async function main() {
 
   await server.register(fastifyConnectPlugin, {
     routes: project,
+  });
+  await server.register(fastifyConnectPlugin, {
+    routes: team,
   });
 
   server.get("/health", async () => {
