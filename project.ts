@@ -30,7 +30,7 @@ const projects: Array<{
     ownerUuid: "550e8400-e29b-41d4-a716-446655440010",
     ownerId: 1,
     ownerName: "john_doe",
-    name: "Web Application",
+    name: "My Project",
     description: "Main production web application",
     purpose: "production",
     environment: "prod",
@@ -40,24 +40,10 @@ const projects: Array<{
     updatedAt: "2024-01-15T14:20:00.000Z",
   },
   {
-    uuid: "550e8400-e29b-41d4-a716-446655440004",
-    ownerUuid: "550e8400-e29b-41d4-a716-446655440010",
-    ownerId: 1,
-    ownerName: "john_doe",
-    name: "E-commerce Platform",
-    description: "Online shopping platform",
-    purpose: "production",
-    environment: "prod",
-    isDefault: false,
-    imageUri: "https://via.placeholder.com/300x200?text=E-commerce%20Platform",
-    createdAt: "2024-01-16T08:15:00.000Z",
-    updatedAt: "2024-01-16T12:30:00.000Z",
-  },
-  {
     uuid: "550e8400-e29b-41d4-a716-446655440002",
     ownerUuid: "550e8400-e29b-41d4-a716-446655440011",
     ownerId: 2,
-    ownerName: "org_one",
+    ownerName: "org-one",
     name: "API Development",
     description: "Backend API development environment",
     purpose: "development",
@@ -71,7 +57,7 @@ const projects: Array<{
     uuid: "550e8400-e29b-41d4-a716-446655440005",
     ownerUuid: "550e8400-e29b-41d4-a716-446655440011",
     ownerId: 2,
-    ownerName: "org_one",
+    ownerName: "org-one",
     name: "Data Analytics",
     description: "Data analytics and reporting platform",
     purpose: "development",
@@ -85,7 +71,7 @@ const projects: Array<{
     uuid: "550e8400-e29b-41d4-a716-446655440003",
     ownerUuid: "550e8400-e29b-41d4-a716-446655440012",
     ownerId: 3,
-    ownerName: "org_two",
+    ownerName: "org-two",
     name: "Mobile App",
     description: "Mobile application for iOS and Android",
     purpose: "testing",
@@ -99,7 +85,7 @@ const projects: Array<{
     uuid: "550e8400-e29b-41d4-a716-446655440006",
     ownerUuid: "550e8400-e29b-41d4-a716-446655440012",
     ownerId: 3,
-    ownerName: "org_two",
+    ownerName: "org-two",
     name: "IoT Dashboard",
     description: "Internet of Things monitoring dashboard",
     purpose: "testing",
@@ -122,7 +108,7 @@ export default function (router: ConnectRouter) {
         uuid: generateUUID(),
         ownerUuid: generateUUID(),
         ownerId: 1,
-        ownerName: "John Doe", // Default owner name, in real app get from auth context
+        ownerName: request.ownerName, // Default owner name, in real app get from auth context, can be empty
         name: request.name,
         description: request.description || "",
         purpose: request.purpose || "development",
@@ -146,19 +132,17 @@ export default function (router: ConnectRouter) {
       let filteredProjects = projects;
 
       // Filter by owner_uuid if provided
-      if (request.ownerUuid) {
-        filteredProjects = filteredProjects.filter(
-          (project) => project.ownerUuid === request.ownerUuid
-        );
-      }
+
+      filteredProjects = filteredProjects.filter(
+        (project) => project.ownerName === request.ownerName
+      );
 
       // Filter by environment if provided
-      if (request.environment) {
-        filteredProjects = filteredProjects.filter(
-          (project) => project.environment === request.environment
-        );
-      }
-
+      // if (request.environment) {
+      //   filteredProjects = filteredProjects.filter(
+      //     (project) => project.environment === request.environment
+      //   );
+      // }
       const pageSize = request.pageSize || 10;
       const pageToken = request.pageToken ? parseInt(request.pageToken) : 0;
       const start = pageToken;
