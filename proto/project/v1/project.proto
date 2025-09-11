@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package project;
+package project.v1;
 
 // Project entity
 message Project {

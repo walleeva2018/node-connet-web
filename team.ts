@@ -309,14 +309,20 @@ export default function (router: ConnectRouter) {
 
     // Get team by ID or UUID
     getTeam: async (request: GetTeamRequest) => {
+      // The protobuf defines team_id as a string field that can contain either ID or UUID
+      const teamIdentifier = request.teamId;
+
       let team;
-      if (request.identifier.case === "id" && request.identifier.value) {
-        team = teams.find((t) => t.id === request.identifier.value);
-      } else if (
-        request.identifier.case === "uuid" &&
-        request.identifier.value
-      ) {
-        team = teams.find((t) => t.uuid === request.identifier.value);
+      // Try to find by UUID first, then by ID
+      team = teams.find((t) => t.uuid === teamIdentifier);
+      if (!team) {
+        // Try to parse as number for ID lookup
+        try {
+          const id = BigInt(teamIdentifier);
+          team = teams.find((t) => t.id === id);
+        } catch {
+          // Not a valid number, continue with UUID search result (null)
+        }
       }
 
       if (!team) {
