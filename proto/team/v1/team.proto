@@ -1,0 +1,282 @@
+syntax = "proto3";
+
+package team.v1;
+
+import "google/protobuf/timestamp.proto";
+import "organization/v1/organization.proto"; // Import organization proto
+
+// Team service for managing teams
+service TeamService {
+  // Create a new team
+  rpc CreateTeam(CreateTeamRequest) returns (CreateTeamResponse);
+  
+  // Get team details
+  rpc GetTeam(GetTeamRequest) returns (GetTeamResponse);
+  
+  // List teams
+  rpc ListTeams(ListTeamsRequest) returns (ListTeamsResponse);
+  
+  // Update team
+  rpc UpdateTeam(UpdateTeamRequest) returns (UpdateTeamResponse);
+  
+  // Delete team
+  rpc DeleteTeam(DeleteTeamRequest) returns (DeleteTeamResponse);
+  
+  // Team member operations
+  rpc AddTeamMember(AddTeamMemberRequest) returns (AddTeamMemberResponse);
+  
+  rpc RemoveTeamMember(RemoveTeamMemberRequest) returns (RemoveTeamMemberResponse);
+  
+  rpc UpdateTeamMember(UpdateTeamMemberRequest) returns (UpdateTeamMemberResponse);
+  
+  rpc ListTeamMembers(ListTeamMembersRequest) returns (ListTeamMembersResponse);
+}
+
+// Enums for team configuration
+enum TeamPermission {
+  TEAM_PERMISSION_UNSPECIFIED = 0;
+  TEAM_PERMISSION_READ = 1;
+  TEAM_PERMISSION_WRITE = 2;
+  TEAM_PERMISSION_ADMIN = 3;
+  TEAM_PERMISSION_OWNER = 4;
+}
+
+enum TeamType {
+  TEAM_TYPE_UNSPECIFIED = 0;
+  TEAM_TYPE_DEVELOPMENT = 1;
+  TEAM_TYPE_OPERATIONS = 2;
+  TEAM_TYPE_DEVOPS = 3;
+  TEAM_TYPE_MARKETING = 4;
+  TEAM_TYPE_SALES = 5;
+  TEAM_TYPE_SUPPORT = 6;
+  TEAM_TYPE_CUSTOM = 7;
+}
+
+enum TeamMemberRole {
+  TEAM_MEMBER_ROLE_UNSPECIFIED = 0;
+  TEAM_MEMBER_ROLE_OWNER = 1;
+  TEAM_MEMBER_ROLE_ADMIN = 2;
+  TEAM_MEMBER_ROLE_MEMBER = 3;
+  TEAM_MEMBER_ROLE_VIEWER = 4;
+}
+
+enum TeamMemberStatus {
+  TEAM_MEMBER_STATUS_UNSPECIFIED = 0;
+  TEAM_MEMBER_STATUS_ACTIVE = 1;
+  TEAM_MEMBER_STATUS_INACTIVE = 2;
+  TEAM_MEMBER_STATUS_PENDING = 3;
+  TEAM_MEMBER_STATUS_SUSPENDED = 4;
+}
+
+enum SignInMethod {
+  SIGN_IN_METHOD_UNSPECIFIED = 0;
+  SIGN_IN_METHOD_PASSWORD = 1;
+  SIGN_IN_METHOD_OAUTH = 2;
+  SIGN_IN_METHOD_SAML = 3;
+  SIGN_IN_METHOD_SSO = 4;
+  SIGN_IN_METHOD_PASSKEY = 5;
+}
+
+// Team represents a team within an organization
+message Team {
+  int64 id = 1;
+  string uuid = 2;  // Adding UUID for consistency with Organization
+  string name = 3;
+  string description = 4;
+  
+  // Organization relationship - using UUID for consistency
+  string organization_uuid = 5;
+  
+  // Permissions and type
+  TeamPermission permission = 6;
+  TeamType type = 7;
+  
+  // Resource limits
+  int32 vm_limit = 8;
+  int32 kubernetes_limit = 9;
+  int32 db_limit = 10;
+  
+  // Members (optional field, populated based on query params)
+  repeated TeamMember members = 11;
+  
+  // Metadata
+  google.protobuf.Timestamp created_at = 12;
+  google.protobuf.Timestamp updated_at = 13;
+  
+  // Additional fields for consistency with organization
+  bool is_active = 14;
+  int32 member_count = 15;
+  
+  // Organization details (optional, populated when needed)
+  organization.v1.Organization organization = 16;
+}
+
+// TeamMember represents a member of a team
+message TeamMember {
+  string id = 1;  // UUID for the team member
+  
+  // Team relationship
+  int64 team_id = 2;
+  string team_uuid = 3;  // Adding UUID reference
+  string team_name = 4;
+  
+  // User information
+  string email = 5;
+  string name = 6;
+  string avatar = 7;
+  
+  // Security settings
+  bool two_factor_auth_enabled = 8;
+  bool has_secure_login = 9;
+  SignInMethod sign_in_method = 10;
+  
+  // Role and status
+  TeamMemberRole role = 11;  // Using enum instead of string
+  TeamMemberStatus status = 12;  // Using enum instead of string
+  
+  // IAM/Subject role - reusing from organization
+  organization.v1.SubjectRole subject_role = 13;
+  
+  // Timestamps
+  google.protobuf.Timestamp joined_at = 14;
+  google.protobuf.Timestamp last_active_at = 15;
+  
+  // Additional metadata
+  bool is_organization_owner = 16;  // Flag if they own the parent org
+  repeated string permissions = 17;  // Specific permissions list
+}
+
+// Request/Response messages for Team operations
+message CreateTeamRequest {
+  string organization_uuid = 1;
+  string name = 2;
+  string description = 3;
+  TeamType type = 4;
+  TeamPermission permission = 5;
+  int32 vm_limit = 6;
+  int32 kubernetes_limit = 7;
+  int32 db_limit = 8;
+}
+
+message CreateTeamResponse {
+  Team team = 1;
+}
+
+message GetTeamRequest {
+  oneof identifier {
+    int64 id = 1;
+    string uuid = 2;
+  }
+  bool include_members = 3;
+  bool include_organization = 4;
+}
+
+message GetTeamResponse {
+  Team team = 1;
+}
+
+message ListTeamsRequest {
+  string organization_uuid = 1;  // Filter by organization
+  int32 page_size = 2;
+  string page_token = 3;
+  
+  // Filters
+  TeamType type = 4;
+  TeamPermission permission = 5;
+  bool is_active = 6;
+  bool include_members = 7;
+}
+
+message ListTeamsResponse {
+  repeated Team teams = 1;
+  string next_page_token = 2;
+  int32 total_count = 3;
+}
+
+message UpdateTeamRequest {
+  string uuid = 1;
+  
+  // Fields to update
+  string name = 2;
+  string description = 3;
+  TeamType type = 4;
+  TeamPermission permission = 5;
+  int32 vm_limit = 6;
+  int32 kubernetes_limit = 7;
+  int32 db_limit = 8;
+  bool is_active = 9;
+  
+  // Field mask (best practice)
+  repeated string update_mask = 10;
+}
+
+message UpdateTeamResponse {
+  Team team = 1;
+}
+
+message DeleteTeamRequest {
+  string uuid = 1;
+}
+
+message DeleteTeamResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Request/Response messages for TeamMember operations
+message AddTeamMemberRequest {
+  string team_uuid = 1;
+  string email = 2;
+  string name = 3;
+  TeamMemberRole role = 4;
+  
+  // Optional: set specific permissions
+  repeated string permissions = 5;
+}
+
+message AddTeamMemberResponse {
+  TeamMember member = 1;
+}
+
+message RemoveTeamMemberRequest {
+  string team_uuid = 1;
+  string member_id = 2;
+}
+
+message RemoveTeamMemberResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message UpdateTeamMemberRequest {
+  string team_uuid = 1;
+  string member_id = 2;
+  
+  // Fields to update
+  TeamMemberRole role = 3;
+  TeamMemberStatus status = 4;
+  repeated string permissions = 5;
+  
+  // Field mask
+  repeated string update_mask = 6;
+}
+
+message UpdateTeamMemberResponse {
+  TeamMember member = 1;
+}
+
+message ListTeamMembersRequest {
+  string team_uuid = 1;
+  int32 page_size = 2;
+  string page_token = 3;
+  
+  // Filters
+  TeamMemberRole role = 4;
+  TeamMemberStatus status = 5;
+}
+
+message ListTeamMembersResponse {
+  repeated TeamMember members = 1;
+  string next_page_token = 2;
+  int32 total_count = 3;
+}
