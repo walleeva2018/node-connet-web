@@ -7,7 +7,6 @@ import user from "./user.js";
 import organization from "./organization.js";
 import project from "./project.js";
 import team from "./team.js";
-import { readFileSync } from "fs";
 
 async function main() {
   const server = fastify();
