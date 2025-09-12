@@ -21,7 +21,6 @@ const projects: Array<{
   purpose: string;
   environment: string;
   isDefault: boolean;
-  imageUri: string;
   createdAt: string;
   updatedAt: string;
 }> = [
@@ -30,12 +29,11 @@ const projects: Array<{
     ownerUuid: "550e8400-e29b-41d4-a716-446655440010",
     ownerId: 1,
     ownerName: "john_doe",
-    name: "My Project",
+    name: "First Project",
     description: "Main production web application",
     purpose: "production",
     environment: "prod",
     isDefault: true,
-    imageUri: "https://via.placeholder.com/300x200?text=Web%20Application",
     createdAt: "2024-01-15T10:30:00.000Z",
     updatedAt: "2024-01-15T14:20:00.000Z",
   },
@@ -49,7 +47,6 @@ const projects: Array<{
     purpose: "development",
     environment: "dev",
     isDefault: false,
-    imageUri: "https://via.placeholder.com/300x200?text=API%20Development",
     createdAt: "2024-01-14T09:15:00.000Z",
     updatedAt: "2024-01-14T16:45:00.000Z",
   },
@@ -63,7 +60,6 @@ const projects: Array<{
     purpose: "development",
     environment: "dev",
     isDefault: false,
-    imageUri: "https://via.placeholder.com/300x200?text=Data%20Analytics",
     createdAt: "2024-01-12T11:30:00.000Z",
     updatedAt: "2024-01-12T15:20:00.000Z",
   },
@@ -77,7 +73,6 @@ const projects: Array<{
     purpose: "testing",
     environment: "staging",
     isDefault: false,
-    imageUri: "https://via.placeholder.com/300x200?text=Mobile%20App",
     createdAt: "2024-01-13T14:20:00.000Z",
     updatedAt: "2024-01-13T18:30:00.000Z",
   },
@@ -91,7 +86,6 @@ const projects: Array<{
     purpose: "testing",
     environment: "staging",
     isDefault: false,
-    imageUri: "https://via.placeholder.com/300x200?text=IoT%20Dashboard",
     createdAt: "2024-01-11T13:45:00.000Z",
     updatedAt: "2024-01-11T17:15:00.000Z",
   },
@@ -114,9 +108,6 @@ export default function (router: ConnectRouter) {
         purpose: request.purpose || "development",
         environment: request.environment || "dev",
         isDefault: request.isDefault || false,
-        imageUri: `https://via.placeholder.com/300x200?text=${encodeURIComponent(
-          request.name
-        )}`,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -161,6 +152,35 @@ export default function (router: ConnectRouter) {
     },
   });
 }
+
+// projectService.ts
+function createProjectInternal(request: {
+  ownerName: string;
+  name: string;
+  description?: string;
+  purpose?: string;
+  environment?: string;
+  isDefault?: boolean;
+}) {
+  const projectData = {
+    uuid: generateUUID(),
+    ownerUuid: generateUUID(),
+    ownerId: 1, // in real-world, derive from org/user
+    ownerName: request.ownerName,
+    name: request.name,
+    description: request.description || "",
+    purpose: request.purpose || "development",
+    environment: request.environment || "dev",
+    isDefault: request.isDefault ?? false,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  projects.push(projectData);
+  return projectData;
+}
+
+export { createProjectInternal };
 
 // Export the helper function for use elsewhere
 export { getProjectsByOwnerName };
