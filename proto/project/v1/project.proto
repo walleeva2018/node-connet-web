@@ -13,12 +13,11 @@ message Project {
   string purpose = 7;
   string environment = 8;
   bool is_default = 9;
-  string image_uri = 10;
-  string created_at = 11;
-  string updated_at = 12;
+  string created_at = 10;
+  string updated_at = 11;
   // Using google.protobuf.Struct for flexible resources field
   // or you can define a specific Resources message if needed
-  optional Resources resources = 13;
+  optional Resources resources = 12;
 }
 
 // Resources message (define based on your actual structure)

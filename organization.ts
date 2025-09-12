@@ -26,6 +26,7 @@ import {
   type UpdateOrganizationRequest,
   type DeleteOrganizationRequest,
 } from "./gen/organization/v1/organization_pb.js";
+import { createProjectInternal } from "./project.js";
 
 // In-memory storage for demo purposes
 export const organizations: Array<{
@@ -246,6 +247,15 @@ export default function (router: ConnectRouter) {
       };
 
       organizations.push(organization);
+
+      createProjectInternal({
+        ownerName: organization.name, // org slug
+        name: `First Project`,
+        description: `Default project for ${organization.displayName}`,
+        purpose: "development",
+        environment: "dev",
+        isDefault: true,
+      });
 
       return create(CreateOrganizationResponseSchema, {
         organization: create(OrganizationSchema, {
