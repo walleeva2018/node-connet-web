@@ -27,6 +27,8 @@ import {
   type DeleteOrganizationRequest,
 } from "./gen/organization/v1/organization_pb.js";
 import { createProjectInternal } from "./project.js";
+import { createTeamWithDefaultOwner } from "./team.js";
+import { TeamType } from "./gen/team/v1/team_pb.js";
 
 // In-memory storage for demo purposes
 export const organizations: Array<{
@@ -255,6 +257,14 @@ export default function (router: ConnectRouter) {
         purpose: "development",
         environment: "dev",
         isDefault: true,
+      });
+
+      createTeamWithDefaultOwner({
+        $typeName: "team.v1.CreateTeamRequest",
+        name: "Customer Success Team",
+        description: "Handles customer onboarding, support, and retention",
+        organizationId: organization.name,
+        type: TeamType.DEVOPS,
       });
 
       return create(CreateOrganizationResponseSchema, {

@@ -70,6 +70,12 @@ export const teams: Array<{
   },
 ];
 
+const defaultOwner = {
+  name: "John Doe",
+  email: "john.doe@example.com",
+  role: MemberRole.OWNER,
+};
+
 // In-memory storage for team members
 export const teamMembers: Array<{
   id: string;
@@ -147,7 +153,11 @@ export default function (router: ConnectRouter) {
       return create(CreateTeamResponseSchema, {
         team: create(TeamSchema, {
           ...team,
-          members: [],
+          members: [
+            create(TeamMemberSchema, {
+              ...defaultOwner,
+            }),
+          ],
           createdAt: {
             seconds: BigInt(Math.floor(Date.parse(team.createdAt) / 1000)),
             nanos: 0,
@@ -321,4 +331,59 @@ function getOrganizationName(organizationId: string): string {
     "org-3": "StartupXYZ",
   };
   return orgNames[organizationId] || "Unknown Organization";
+}
+
+export async function createTeamWithDefaultOwner(request: CreateTeamRequest) {
+  const newTeamId = `team-${nextTeamId++}`;
+  const createdAt = new Date().toISOString();
+
+  const newTeam = {
+    id: newTeamId,
+    name: request.name,
+    description: request.description,
+    organizationId: request.organizationId,
+    organizationName: getOrganizationName(request.organizationId),
+    type: request.type || TeamType.DEVELOPMENT,
+    memberCount: 1,
+    createdAt,
+    updatedAt: createdAt,
+  };
+
+  teams.push(newTeam);
+
+  const yuid = `yuid-${Math.random().toString(36).substring(2, 10)}`;
+
+  const defaultOwner = {
+    id: yuid,
+    name: "John Doe",
+    email: "john.doe@example.com",
+    role: MemberRole.OWNER,
+    joinedAt: createdAt,
+    teamId: newTeamId,
+  };
+
+  teamMembers.push(defaultOwner);
+
+  return {
+    team: create(TeamSchema, {
+      ...newTeam,
+      members: [
+        create(TeamMemberSchema, {
+          ...defaultOwner,
+          joinedAt: {
+            seconds: BigInt(Math.floor(Date.parse(createdAt) / 1000)),
+            nanos: 0,
+          },
+        }),
+      ],
+      createdAt: {
+        seconds: BigInt(Math.floor(Date.parse(createdAt) / 1000)),
+        nanos: 0,
+      },
+      updatedAt: {
+        seconds: BigInt(Math.floor(Date.parse(createdAt) / 1000)),
+        nanos: 0,
+      },
+    }),
+  };
 }
