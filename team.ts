@@ -69,11 +69,15 @@ export const teams: Array<{
     updatedAt: new Date("2024-10-20").toISOString(),
   },
 ];
-
+let nextTeamId = 4;
+const randomuuid = `yuid-${Math.random().toString(36).substring(2, 10)}`;
 const defaultOwner = {
+  id: randomuuid,
   name: "John Doe",
   email: "john.doe@example.com",
   role: MemberRole.OWNER,
+  joinedAt: new Date().toISOString(),
+  teamId: `team-${nextTeamId++}`,
 };
 
 // In-memory storage for team members
@@ -130,32 +134,49 @@ export const teamMembers: Array<{
   },
 ];
 
-let nextTeamId = 4;
-
 export default function (router: ConnectRouter) {
   router.service(TeamService, {
     // Create a new team
     createTeam: async (request: CreateTeamRequest) => {
+      const newTeamId = `team-${nextTeamId++}`;
+      const createdAt = new Date().toISOString();
+
       const team = {
-        id: `team-${nextTeamId++}`,
+        id: newTeamId,
         name: request.name,
         description: request.description,
         organizationId: request.organizationId,
         organizationName: getOrganizationName(request.organizationId),
         type: request.type,
-        memberCount: 0,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        memberCount: 1,
+        createdAt,
+        updatedAt: createdAt,
       };
 
       teams.push(team);
+
+      const yuid = `yuid-${Math.random().toString(36).substring(2, 10)}`;
+      const owner = {
+        id: yuid,
+        name: "John Doe",
+        email: "john.doe@example.com",
+        role: MemberRole.OWNER,
+        joinedAt: createdAt,
+        teamId: newTeamId,
+      };
+
+      teamMembers.push(owner);
 
       return create(CreateTeamResponseSchema, {
         team: create(TeamSchema, {
           ...team,
           members: [
             create(TeamMemberSchema, {
-              ...defaultOwner,
+              ...owner,
+              joinedAt: {
+                seconds: BigInt(Math.floor(Date.parse(owner.joinedAt) / 1000)),
+                nanos: 0,
+              },
             }),
           ],
           createdAt: {
@@ -323,7 +344,6 @@ export default function (router: ConnectRouter) {
   });
 }
 
-// Helper function to get organization name (in real app, this would query the org service)
 function getOrganizationName(organizationId: string): string {
   const orgNames: Record<string, string> = {
     "org-1": "TechCorp Inc",
