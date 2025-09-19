@@ -7,6 +7,7 @@ import user from "./user.js";
 import organization from "./organization.js";
 import project from "./project.js";
 import team from "./team.js";
+import database from "./database.js";
 
 async function main() {
   const server = fastify();
@@ -37,6 +38,10 @@ async function main() {
   });
   await server.register(fastifyConnectPlugin, {
     routes: team,
+  });
+
+  await server.register(fastifyConnectPlugin, {
+    routes: database,
   });
 
   server.get("/health", async () => {
