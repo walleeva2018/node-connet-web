@@ -313,10 +313,6 @@ export default function (router: ConnectRouter) {
       const paginatedOrgs = filtered.slice(start, end);
 
       const nextPageToken = end < filtered.length ? end.toString() : "";
-      console.log("Filtered Orgs:", filtered);
-      console.log("Paginated Orgs:", paginatedOrgs);
-      console.log("Next Page Token:", nextPageToken);
-
       return create(ListOrganizationsResponseSchema, {
         organizations: paginatedOrgs.map((org) =>
           create(OrganizationSchema, {

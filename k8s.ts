@@ -196,20 +196,3 @@ function validateRegion(region: string): boolean {
   return validRegions.includes(region);
 }
 
-// Pricing helper for node pools (monthly cost per node)
-function getNodePoolPricing(size: string): number {
-  const pricing: Record<string, number> = {
-    "s-1vcpu-2gb": 10.0,
-    "s-2vcpu-2gb": 15.0,
-    "s-2vcpu-4gb": 20.0,
-    "s-4vcpu-8gb": 40.0,
-    "s-8vcpu-16gb": 80.0,
-    "c-2": 30.0,
-    "c-4": 60.0,
-    "c-8": 120.0,
-    "c-16": 240.0,
-    "m-2vcpu-16gb": 60.0,
-    "m-4vcpu-32gb": 120.0,
-  };
-  return pricing[size] || 10.0;
-}

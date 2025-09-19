@@ -1,0 +1,395 @@
+syntax = "proto3";
+package database.v1;
+
+// DatabaseType enum for supported database types
+enum DatabaseType {
+  DATABASE_TYPE_UNSPECIFIED = 0;
+  DATABASE_TYPE_POSTGRES = 1;
+  DATABASE_TYPE_MONGODB = 2;
+}
+
+// DatabaseLayout enum for cluster configurations
+enum DatabaseLayout {
+  DATABASE_LAYOUT_UNSPECIFIED = 0;
+  DATABASE_LAYOUT_SINGLE_NODE = 1;
+  DATABASE_LAYOUT_MULTI_NODE_2 = 2;
+  DATABASE_LAYOUT_MULTI_NODE_6 = 3;
+  DATABASE_LAYOUT_MULTI_NODE_9 = 4;
+  DATABASE_LAYOUT_MULTI_NODE_15 = 5;
+}
+
+// SizeCategory enum for plan categories
+enum SizeCategory {
+  SIZE_CATEGORY_UNSPECIFIED = 0;
+  SIZE_CATEGORY_STANDARD = 1;
+  SIZE_CATEGORY_BASIC_PREMIUM_INTEL = 2;
+  SIZE_CATEGORY_BASIC_PREMIUM_AMD = 3;
+  SIZE_CATEGORY_GENERAL_PURPOSE = 4;
+  SIZE_CATEGORY_STORAGE_OPTIMIZED = 5;
+}
+
+enum UserType {
+  USER_TYPE_UNSPECIFIED = 0;
+  USER_TYPE_USER = 1;
+  USER_TYPE_ORGANIZATION = 2;
+}
+
+// CreateDatabaseRequest represents the request to create a database cluster
+message CreateDatabaseRequest {
+  // Name of the database cluster
+  string name = 1;
+  
+  // Region where the cluster will be created (e.g., "nyc3", "sfo2")
+  string region = 2;
+  
+  // Size/plan for the database (e.g., "s-1-1-8-dd", "g-2-8-50-dd")
+  string size = 3;
+  
+  // Storage size in MiB
+  int64 storage_size_mib = 4;
+  
+  // Database type (POSTGRES, MONGODB)
+  DatabaseType type = 5;
+  
+  // Database version (e.g., "17", "8.0")
+  string version = 6;
+  
+  // Cluster layout configuration
+  DatabaseLayout layout = 7;
+  
+  // VPC UUID for network isolation
+  string vpc_uuid = 8;
+  
+  // Project UUID
+  string project_uuid = 9;
+  
+  // Tags associated with the database
+  repeated string tags = 10;
+  
+  // Storage autoscaling configuration
+  bool storage_autoscale_enabled = 11;
+  int32 storage_autoscale_threshold = 12;
+  int64 storage_autoscale_increment_mib = 13;
+
+  UserType user_type = 14;
+  string user_uuid = 15;
+}
+
+// CreateDatabaseResponse represents the response from database creation
+message CreateDatabaseResponse {
+  // The created database information
+  Database database = 1;
+}
+
+// GetCreateOptionsRequest represents the request to get database creation options
+message GetCreateOptionsRequest {
+  // Empty request
+}
+
+// GetCreateOptionsResponse represents the response containing creation options
+message GetCreateOptionsResponse {
+  // Available cluster options
+  repeated DatabaseOption options = 1;
+}
+
+// ClusterOption represents available options for a database type
+message DatabaseOption {
+  // Database type (PG, MONGODB)
+   string type = 1;
+   string name = 2;
+   string description = 3;
+  
+  // Default version for this database type
+  string default_version = 4;
+  
+  // Available regions for this database type
+  repeated string regions = 5;
+  
+  // Available versions for this database type
+  repeated string versions = 6;
+  
+  // Available sizes/plans for this database type
+  repeated string sizes = 7;
+
+    repeated Plan plans = 8;
+}
+
+// GetRegionsRequest represents the request to get available regions
+message GetRegionsRequest {
+
+}
+
+// GetRegionsResponse represents the response containing region information
+message GetRegionsResponse {
+  // Available regions with VPC information
+  repeated RegionVPC regions = 1;
+}
+
+// RegionVPC represents a region with its VPC configurations
+message RegionVPC {
+  // Region code (e.g., "nyc3", "sfo2")
+  string region = 1;
+  string name = 2;
+  // Available VPCs in this region
+  repeated VPC vpcs = 3;
+}
+
+// VPC represents a Virtual Private Cloud configuration
+message VPC {
+  // VPC unique identifier
+  string id = 1;
+  
+  // VPC name
+  string name = 2;
+  
+  // VPC description
+  string description = 3;
+  
+  // Region where the VPC is located
+  string region = 4;
+  
+  // IP range for the VPC
+  string ip_range = 5;
+  
+  // Whether this is the default VPC for the region
+  bool is_default = 6;
+}
+
+// ResourceCountByType represents resource counts categorized by type
+message ResourceCountByType {
+  // Number of database resources
+  int32 dbaas = 1;
+  
+  // Number of droplet resources
+  int32 droplet = 2;
+  
+  // Number of kubernetes resources
+  int32 kubernetes = 3;
+  
+  // Number of load balancer resources
+  int32 loadbalancer = 4;
+}
+
+// GetPlansRequest represents the request to get available database plans
+message GetPlansRequest {
+
+}
+
+// GetPlansResponse represents the response containing database plans
+message GetPlansResponse {
+  // Available plans for PostgreSQL
+  PlanList postgres = 1;
+  
+  // Available plans for MongoDB
+  PlanList mongodb = 2;
+}
+
+// PlanList represents a list of plans for a specific database type
+message PlanList {
+  // List of available plans
+  repeated Plan plans = 1;
+}
+
+// Plan represents a database plan/configuration
+message Plan {
+  // Plan name/identifier (e.g., "s-1-1-8-dd")
+  string name = 1;
+  
+  // Monthly price in dollars
+  double monthly_price = 2;
+  
+  // Number of virtual CPUs
+  int32 v_cpu = 3;
+  
+  // Total RAM in GB
+  int32 ram_total = 4;
+  
+  // Usable memory in GB
+  int32 usable_memory = 5;
+  
+  // Initial disk size in GB
+  int32 disk_size = 6;
+  
+  // Maximum disk size in GB
+  int32 disk_size_max = 7;
+  
+  // Size category
+  SizeCategory size_category = 8;
+  
+  // Corresponding droplet slug name
+  string droplet_slug_name = 9;
+  
+  // Regions where this plan is available (MongoDB specific)
+  repeated string enabled_regions = 10;
+  
+  // Layouts that are excluded for this plan (MongoDB specific)
+  repeated string excluded_layouts = 11;
+  
+  // Standby monthly price (MongoDB specific)
+  string standby_monthly_price = 12;
+  
+  // Replica monthly price (MongoDB specific)
+  string replica_monthly_price = 13;
+  
+  // Price per GiB (MongoDB specific)
+  string price_per_gib = 14;
+  
+  // Whether the plan is deprecated
+  bool is_deprecated = 15;
+}
+
+// ListDatabasesRequest represents the request to list database clusters
+message ListDatabasesRequest {
+  // Optional: filter by region
+  optional string region = 1;
+  
+  // Optional: filter by database type
+  optional DatabaseType type = 2;
+  
+  // Optional: filter by tags
+   repeated string tags = 3;
+  
+  // Optional: filter by project
+   optional string project_uuid = 4;
+  
+   string user_uuid = 5;
+  
+}
+
+// ListDatabasesResponse represents the response containing multiple databases
+message ListDatabasesResponse {
+  // List of databases
+  repeated Database databases = 1;
+  
+  // Total count of databases
+  int32 total_count = 2;
+}
+
+// Database represents a database cluster
+message Database {
+  // Unique identifier for the database
+  string id = 1;
+  
+  // Name of the database
+  string name = 2;
+  
+  // Region where the database is located
+  string region = 3;
+  
+  // Database type
+  DatabaseType type = 4;
+  
+  // Database version
+  string version = 5;
+  
+  // Plan/size configuration
+  string size = 6;
+  
+  // Storage size in MiB
+  int64 storage_size_mib = 7;
+  
+  // Cluster layout
+  DatabaseLayout layout = 8;
+  
+  // VPC UUID
+  string vpc_uuid = 9;
+  
+  // Project UUID
+  string project_uuid = 10;
+  
+  // Current status of the database
+  string status = 11;
+  
+  // Database connection endpoint
+  string endpoint = 12;
+  
+  // Database port
+  int32 port = 13;
+  
+  // Creation timestamp
+  string created_at = 14;
+  
+  // Last update timestamp
+  string updated_at = 15;
+  
+  // Tags associated with the database
+  repeated string tags = 16;
+  
+  // Storage autoscaling configuration
+  StorageAutoscale storage_autoscale = 17;
+
+  UserType user_type = 18;
+  string user_uuid = 19;
+}
+
+// StorageAutoscale represents storage autoscaling configuration
+message StorageAutoscale {
+  // Whether storage autoscaling is enabled
+  bool enabled = 1;
+  
+  // Threshold percentage for triggering autoscale
+  int32 threshold = 2;
+  
+  // Increment size in MiB when scaling
+  int64 increment_mib = 3;
+}
+
+// UpdateDatabaseRequest represents the request to update a database
+message UpdateDatabaseRequest {
+  // Database ID to update
+  string id = 1;
+  
+  // Optional: new size/plan
+  string size = 2;
+  
+  // Optional: new storage size in MiB
+  int64 storage_size_mib = 3;
+  
+  // Optional: new tags
+  repeated string tags = 4;
+  
+  // Optional: storage autoscaling configuration
+  StorageAutoscale storage_autoscale = 5;
+}
+
+// UpdateDatabaseResponse represents the response from database update
+message UpdateDatabaseResponse {
+  // The updated database information
+  Database database = 1;
+}
+
+// DeleteDatabaseRequest represents the request to delete a database
+message DeleteDatabaseRequest {
+  // Database ID to delete
+  string id = 1;
+}
+
+// DeleteDatabaseResponse represents the response from database deletion
+message DeleteDatabaseResponse {
+  // Success message
+  string message = 1;
+}
+
+// Service definition for database cluster management
+service DatabaseService {
+  // Gets available options for creating databases
+  rpc GetCreateOptions(GetCreateOptionsRequest) returns (GetCreateOptionsResponse);
+  
+  // Gets available regions with VPC information
+  rpc GetRegions(GetRegionsRequest) returns (GetRegionsResponse);
+  
+  // Gets available plans for database types
+  rpc GetPlans(GetPlansRequest) returns (GetPlansResponse);
+  
+  // Creates a new database cluster
+  rpc CreateDatabase(CreateDatabaseRequest) returns (CreateDatabaseResponse);
+  
+  // Lists all database clusters
+  rpc ListDatabases(ListDatabasesRequest) returns (ListDatabasesResponse);
+  
+  // Updates an existing database cluster
+  rpc UpdateDatabase(UpdateDatabaseRequest) returns (UpdateDatabaseResponse);
+  
+  // Deletes a database cluster
+  rpc DeleteDatabase(DeleteDatabaseRequest) returns (DeleteDatabaseResponse);
+}
