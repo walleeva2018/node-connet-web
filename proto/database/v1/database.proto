@@ -95,7 +95,7 @@ message GetCreateOptionsResponse {
 // ClusterOption represents available options for a database type
 message DatabaseOption {
   // Database type (PG, MONGODB)
-   string type = 1;
+   DatabaseType type = 1;
    string name = 2;
    string description = 3;
   
