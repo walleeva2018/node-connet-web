@@ -45,87 +45,6 @@ import user from "./user.js";
 const databases: Database[] = [
   {
     $typeName: "database.v1.Database",
-    id: "db-1002",
-    name: "prod_db",
-    region: "us-east1",
-    type: DatabaseType.POSTGRES,
-    version: "14.5",
-    size: "large",
-    storageSizeMib: BigInt(4096),
-    layout: DatabaseLayout.SINGLE_NODE,
-    vpcUuid: "vpc-1001",
-    projectUuid: "550e8400-e29b-41d4-a716-446655440001",
-    status: "ACTIVE",
-    endpoint: "prod-db.example.com",
-    port: 5432,
-    createdAt: "2025-02-15T09:00:00Z",
-    updatedAt: "2025-09-16T11:45:00Z",
-    tags: ["prod", "critical"],
-    storageAutoscale: {
-      $typeName: "database.v1.StorageAutoscale",
-      enabled: true,
-      threshold: 80,
-      incrementMib: BigInt(8192),
-    },
-    userType: UserType.USER,
-    userUuid: "user-uuid-1",
-  },
-  {
-    $typeName: "database.v1.Database",
-    id: "db-2001",
-    name: "org_dev_db",
-    region: "eu-west1",
-    type: DatabaseType.MONGODB,
-    version: "8.0",
-    size: "medium",
-    storageSizeMib: BigInt(2048),
-    layout: DatabaseLayout.SINGLE_NODE,
-    vpcUuid: "vpc-2001",
-    projectUuid: "550e8400-e29b-41d4-a716-446655440002",
-    status: "ACTIVE",
-    endpoint: "org-dev-db.example.com",
-    port: 3306,
-    createdAt: "2025-03-20T10:00:00Z",
-    updatedAt: "2025-09-14T12:15:00Z",
-    tags: ["org", "dev"],
-    storageAutoscale: {
-      $typeName: "database.v1.StorageAutoscale",
-      enabled: true,
-      threshold: 80,
-      incrementMib: BigInt(8192),
-    },
-    userType: UserType.ORGANIZATION,
-    userUuid: "org-uuid-1",
-  },
-  {
-    $typeName: "database.v1.Database",
-    id: "db-2002",
-    name: "org_prod_db",
-    region: "eu-west1",
-    type: DatabaseType.POSTGRES,
-    version: "8.0",
-    size: "xlarge",
-    storageSizeMib: BigInt(8192),
-    layout: DatabaseLayout.SINGLE_NODE,
-    vpcUuid: "vpc-2001",
-    projectUuid: "550e8400-e29b-41d4-a716-446655440002",
-    status: "ACTIVE",
-    endpoint: "org-prod-db.example.com",
-    port: 3306,
-    createdAt: "2025-04-05T11:00:00Z",
-    updatedAt: "2025-09-16T13:30:00Z",
-    tags: ["org", "prod"],
-    storageAutoscale: {
-      $typeName: "database.v1.StorageAutoscale",
-      enabled: true,
-      threshold: 80,
-      incrementMib: BigInt(8192),
-    },
-    userType: UserType.ORGANIZATION,
-    userUuid: "org-uuid-1",
-  },
-  {
-    $typeName: "database.v1.Database",
     id: "db-3001",
     name: "analytics_db",
     region: "ap-south1",
@@ -692,7 +611,7 @@ const mockMongodbPlans = [
 
 const mockClusterOptions = [
   {
-    type: "postgres",
+    type: DatabaseType.POSTGRES,
     name: "PostgreSQL",
     description: "Relational database",
     defaultVersion: "17",
@@ -727,7 +646,7 @@ const mockClusterOptions = [
     plans: mockPostgresPlans,
   },
   {
-    type: "mongodb",
+    type: DatabaseType.MONGODB,
     name: "MongoDB",
     description: "NoSQL database",
     defaultVersion: "8.0",
@@ -852,7 +771,7 @@ export default function (router: ConnectRouter) {
       const options = mockClusterOptions;
 
       // Delay for 1 second
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       return create(GetCreateOptionsResponseSchema, {
         options: options,
@@ -914,6 +833,7 @@ export default function (router: ConnectRouter) {
 
       // Store in our in-memory storage
       databases.push(database);
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       return create(CreateDatabaseResponseSchema, {
         database: create(DatabaseSchema, database),
@@ -922,12 +842,8 @@ export default function (router: ConnectRouter) {
 
     // List database clusters
     listDatabases: async (request: ListDatabasesRequest) => {
-      let filtered = Array.from(databases.values());
+      let filtered = databases;
       filtered = filtered.filter((db) => db.userUuid === request.userUuid);
-      // Filter by region if specified
-      // if (request.region) {
-      //   filtered = filtered.filter((db) => db.region === request.region);
-      // }
 
       // Filter by project if specified
       if (request.projectUuid) {
@@ -935,9 +851,10 @@ export default function (router: ConnectRouter) {
           (db) => db.projectUuid === request.projectUuid
         );
       }
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       return create(ListDatabasesResponseSchema, {
-        databases: filtered.map((db) => create(DatabaseSchema, db)),
+        databases: filtered,
         totalCount: filtered.length,
       });
     },
