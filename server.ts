@@ -9,7 +9,7 @@ import project from "./project.js";
 import team from "./team.js";
 import database from "./database.js";
 import natsService from "./nats.js";
-
+import websocket from "@fastify/websocket";
 async function main() {
   const server = fastify();
 
@@ -46,6 +46,28 @@ async function main() {
 
   await server.register(fastifyConnectPlugin, {
     routes: database,
+  });
+
+  server.register(async function (fastify) {
+    fastify.get("/nats", { websocket: true }, (connection, req) => {
+      console.log("WebSocket client connected");
+
+      // Subscribe to all NATS messages
+      const subscription = natsService.subscribeToAll((subject, data) => {
+        const message = {
+          subject,
+          data,
+          timestamp: new Date().toISOString(),
+        };
+        connection.socket.send(JSON.stringify(message));
+      });
+
+      // Cleanup on disconnect
+      connection.socket.on("close", () => {
+        console.log("WebSocket client disconnected");
+        subscription?.unsubscribe();
+      });
+    });
   });
 
   // Health check

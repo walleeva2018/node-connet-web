@@ -18,6 +18,7 @@
     "@connectrpc/connect-fastify": "^2.0.4",
     "@connectrpc/connect-node": "^2.0.4",
     "@fastify/cors": "^11.1.0",
+    "@fastify/websocket": "^11.2.0",
     "fastify": "^5.5.0",
     "nats": "^2.29.3",
     "tsx": "^4.20.4",
