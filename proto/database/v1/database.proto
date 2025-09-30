@@ -370,10 +370,20 @@ message DeleteDatabaseResponse {
   string message = 1;
 }
 
+message GetDatabaseRequest {
+  string id = 1; // database id, e.g. "db-1"
+}
+
+message GetDatabaseResponse {
+  Database database = 1;
+}
+
 // Service definition for database cluster management
 service DatabaseService {
   // Gets available options for creating databases
   rpc GetCreateOptions(GetCreateOptionsRequest) returns (GetCreateOptionsResponse);
+
+  rpc GetDatabase(GetDatabaseRequest) returns (GetDatabaseResponse);
   
   // Gets available regions with VPC information
   rpc GetRegions(GetRegionsRequest) returns (GetRegionsResponse);
