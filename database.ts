@@ -16,6 +16,7 @@ import {
   UpdateDatabaseResponseSchema,
   DeleteDatabaseRequestSchema,
   DeleteDatabaseResponseSchema,
+  GetDatabaseResponseSchema,
   DatabaseSchema,
   RegionVPCSchema,
   VPCSchema,
@@ -36,6 +37,7 @@ import {
   type DeleteDatabaseRequest,
   type Database,
   type Plan,
+  type GetDatabaseRequest,
   UserType,
   type GetCreateOptionsResponse,
 } from "./gen/database/v1/database_pb.js";
@@ -43,6 +45,34 @@ import user from "./user.js";
 
 // In-memory storage for demo purposes
 const databases: Database[] = [
+    {
+    $typeName: "database.v1.Database",
+    id: "db-3001",
+    name: "analytics_db",
+    region: "ap-south1",
+    type: DatabaseType.MONGODB,
+    version: "5.0",
+    size: "medium",
+    storageSizeMib: BigInt(2048),
+    layout: DatabaseLayout.SINGLE_NODE,
+    vpcUuid: "vpc-3001",
+    projectUuid: "550e8400-e29b-41d4-a716-446655440003",
+    status: "ACTIVE",
+    endpoint: "analytics-db.example.com",
+    port: 27017,
+    createdAt: "2025-05-10T12:00:00Z",
+    updatedAt: "2025-09-15T14:20:00Z",
+    tags: ["analytics", "test"],
+    storageAutoscale: {
+      $typeName: "database.v1.StorageAutoscale",
+      enabled: true,
+      threshold: 80,
+      incrementMib: BigInt(8192),
+    },
+    userType: UserType.ORGANIZATION,
+    userUuid: "user-uuid-1",
+  },
+  
   {
     $typeName: "database.v1.Database",
     id: "db-3001",
@@ -764,6 +794,15 @@ const mockRegions = [
   },
 ];
 
+function fun(id:string){
+    const db = databases.find((d) => d.id === id);
+    
+    if (db) {
+      db.status = "Ready";
+      db.updatedAt = new Date().toISOString();
+    }
+}
+
 export default function (router: ConnectRouter) {
   router.service(DatabaseService, {
     // Get available options for creating databases
@@ -804,47 +843,66 @@ export default function (router: ConnectRouter) {
 
     // Create a new database cluster
     createDatabase: async (request: CreateDatabaseRequest) => {
-      const database: Database = {
-        $typeName: "database.v1.Database",
-        id: `db-${nextId++}`,
-        name: request.name,
-        region: request.region,
-        type: request.type,
-        version: request.version,
-        size: request.size,
-        storageSizeMib: request.storageSizeMib,
-        layout: request.layout,
-        vpcUuid: request.vpcUuid,
-        projectUuid: request.projectUuid,
-        status: "creating",
-        endpoint: `${request.name}.db.ondigitalocean.com`,
-        port: request.type === DatabaseType.POSTGRES ? 25060 : 27017,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        tags: request.tags,
-        storageAutoscale: create(StorageAutoscaleSchema, {
-          enabled: request.storageAutoscaleEnabled,
-          threshold: request.storageAutoscaleThreshold,
-          incrementMib: request.storageAutoscaleIncrementMib,
-        }),
-        userType: request.userType,
-        userUuid: request.userUuid,
-      };
 
-      // Store in our in-memory storage
-      databases.push(database);
-      await new Promise((resolve) => setTimeout(resolve, 500));
+  const database: Database = {
+    $typeName: "database.v1.Database",
+    id: `db-${Date.now()}`,
+    name: request.name,
+    region: request.region,
+    type: request.type,
+    version: request.version,
+    size: request.size,
+    storageSizeMib: request.storageSizeMib,
+    layout: request.layout,
+    vpcUuid: request.vpcUuid,
+    projectUuid: request.projectUuid,
+    status: "Provisioning",
+    endpoint: `${request.name}.db.ondigitalocean.com`,
+    port: request.type === DatabaseType.POSTGRES ? 25060 : 27017,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    tags: request.tags,
+    storageAutoscale: create(StorageAutoscaleSchema, {
+      enabled: request.storageAutoscaleEnabled,
+      threshold: request.storageAutoscaleThreshold,
+      incrementMib: request.storageAutoscaleIncrementMib,
+    }),
+    userType: request.userType,
+    userUuid: request.userUuid,
+  };
 
-      return create(CreateDatabaseResponseSchema, {
-        database: create(DatabaseSchema, database),
-      });
-    },
+ 
+  databases.push(database);
+
+
+  setTimeout(() => {
+     fun(database.id)
+   
+  }, 1000 * 15 );
+
+  // await new Promise((resolve) => setTimeout(resolve, 500));
+
+  return create(CreateDatabaseResponseSchema, {
+    database: create(DatabaseSchema, database),
+  });
+},
+
+  getDatabase: async (request: GetDatabaseRequest) => {
+  const database = databases.find((db) => db.id === request.id);
+
+  if (!database) {
+    throw new Error(`Database with id ${request.id} not found`);
+  }
+
+  return create(GetDatabaseResponseSchema, {
+    database: create(DatabaseSchema, database),
+  });
+},
 
     // List database clusters
     listDatabases: async (request: ListDatabasesRequest) => {
       let filtered = databases;
       filtered = filtered.filter((db) => db.userUuid === request.userUuid);
-
       // Filter by project if specified
       if (request.projectUuid) {
         filtered = filtered.filter(
