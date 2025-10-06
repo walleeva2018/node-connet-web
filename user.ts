@@ -64,6 +64,7 @@ const users = [
     isTrial: false,
     authnType: AuthType.GOOGLE_OAUTH,
     teamLimit: 5,
+    isAdmin: true,
     credits: [
       {
         id: "cred-1",
