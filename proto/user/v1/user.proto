@@ -95,10 +95,9 @@ message User {
   int32 team_limit = 34;
   repeated Credit credits = 35;
   string bank_machine_result = 36;
-  repeated organization.v1.Organization organizations = 37;  // User's organizations
+  bool is_admin = 37;
+  repeated organization.v1.Organization organizations = 38;  // User's organizations
 }
-
-
 
 
 // Fetch User
