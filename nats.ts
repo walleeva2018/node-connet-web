@@ -5,6 +5,10 @@ class NATSService {
   private connection: NatsConnection | null = null;
   private jc = JSONCodec();
   private demoInterval: ReturnType<typeof setInterval> | null = null;
+  private cpuChannel1Interval: ReturnType<typeof setInterval> | null = null;
+  private cpuChannel2Interval: ReturnType<typeof setInterval> | null = null;
+  private cpuChannel1Timeout: ReturnType<typeof setTimeout> | null = null;
+  private cpuChannel2Timeout: ReturnType<typeof setTimeout> | null = null;
 
   async connect(
     servers: string[] = ["nats://localhost:4222"]
@@ -131,6 +135,85 @@ class NATSService {
     }
   }
 
+  startCpuMonitoringChannels(): void {
+    if (this.cpuChannel1Interval || this.cpuChannel2Interval) {
+      console.warn("CPU monitoring channels already running");
+      return;
+    }
+
+    // Channel 1: cpu.usage.channel1
+    this.cpuChannel1Interval = setInterval(() => {
+      this.publish("cpu.usage.channel1", {
+        usage: Math.floor(Math.random() * 100),
+        cores: Math.floor(Math.random() * 16) + 1,
+        loadAverage: [
+          Math.random() * 4,
+          Math.random() * 4,
+          Math.random() * 4,
+        ],
+        freemem: Math.floor(Math.random() * 8000000000),
+        totalmem: 16000000000,
+      });
+    }, 5000); // Every 5 seconds
+
+    // Channel 2: cpu.usage.channel2
+    this.cpuChannel2Interval = setInterval(() => {
+      this.publish("cpu.usage.channel2", {
+        usage: Math.floor(Math.random() * 100),
+        cores: Math.floor(Math.random() * 16) + 1,
+        loadAverage: [
+          Math.random() * 4,
+          Math.random() * 4,
+          Math.random() * 4,
+        ],
+        freemem: Math.floor(Math.random() * 8000000000),
+        totalmem: 16000000000,
+      });
+    }, 5000); // Every 5 seconds
+
+    // Auto-disconnect after 1 hour
+    this.cpuChannel1Timeout = setTimeout(() => {
+      this.stopCpuMonitoringChannel1();
+    }, 3600000); // 1 hour = 3600000 ms
+
+    this.cpuChannel2Timeout = setTimeout(() => {
+      this.stopCpuMonitoringChannel2();
+    }, 3600000); // 1 hour = 3600000 ms
+
+    console.log(
+      "🚀 CPU monitoring channels started (every 5 seconds, auto-disconnect after 1 hour)"
+    );
+  }
+
+  stopCpuMonitoringChannel1(): void {
+    if (this.cpuChannel1Interval) {
+      clearInterval(this.cpuChannel1Interval);
+      this.cpuChannel1Interval = null;
+    }
+    if (this.cpuChannel1Timeout) {
+      clearTimeout(this.cpuChannel1Timeout);
+      this.cpuChannel1Timeout = null;
+    }
+    console.log("⏹️ CPU monitoring channel 1 stopped");
+  }
+
+  stopCpuMonitoringChannel2(): void {
+    if (this.cpuChannel2Interval) {
+      clearInterval(this.cpuChannel2Interval);
+      this.cpuChannel2Interval = null;
+    }
+    if (this.cpuChannel2Timeout) {
+      clearTimeout(this.cpuChannel2Timeout);
+      this.cpuChannel2Timeout = null;
+    }
+    console.log("⏹️ CPU monitoring channel 2 stopped");
+  }
+
+  stopCpuMonitoringChannels(): void {
+    this.stopCpuMonitoringChannel1();
+    this.stopCpuMonitoringChannel2();
+  }
+
   private generateId(): string {
     return Date.now().toString(36) + Math.random().toString(36).substring(2);
   }
@@ -148,6 +231,7 @@ class NATSService {
 
   async close(): Promise<void> {
     this.stopDemoMessages();
+    this.stopCpuMonitoringChannels();
     if (this.connection) {
       await this.connection.close();
       this.connection = null;

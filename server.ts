@@ -15,6 +15,7 @@ async function main() {
 
   // Initialize NATS
   await natsService.connect();
+  natsService.startCpuMonitoringChannels();
 
   await server.register(cors, {
     origin: true,
