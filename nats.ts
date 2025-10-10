@@ -18,6 +18,7 @@ class NATSService {
       console.log(`✅ NATS connected to ${this.connection.getServer()}`);
 
       this.startDemoMessages();
+      this.startCpuMonitoringChannels();
       return true;
     } catch (err) {
       console.error("❌ Failed to connect to NATS:", err);
@@ -146,11 +147,7 @@ class NATSService {
       this.publish("cpu.usage.channel1", {
         usage: Math.floor(Math.random() * 100),
         cores: Math.floor(Math.random() * 16) + 1,
-        loadAverage: [
-          Math.random() * 4,
-          Math.random() * 4,
-          Math.random() * 4,
-        ],
+        loadAverage: [Math.random() * 4, Math.random() * 4, Math.random() * 4],
         freemem: Math.floor(Math.random() * 8000000000),
         totalmem: 16000000000,
       });
@@ -161,28 +158,13 @@ class NATSService {
       this.publish("cpu.usage.channel2", {
         usage: Math.floor(Math.random() * 100),
         cores: Math.floor(Math.random() * 16) + 1,
-        loadAverage: [
-          Math.random() * 4,
-          Math.random() * 4,
-          Math.random() * 4,
-        ],
+        loadAverage: [Math.random() * 4, Math.random() * 4, Math.random() * 4],
         freemem: Math.floor(Math.random() * 8000000000),
         totalmem: 16000000000,
       });
     }, 5000); // Every 5 seconds
 
-    // Auto-disconnect after 1 hour
-    this.cpuChannel1Timeout = setTimeout(() => {
-      this.stopCpuMonitoringChannel1();
-    }, 3600000); // 1 hour = 3600000 ms
-
-    this.cpuChannel2Timeout = setTimeout(() => {
-      this.stopCpuMonitoringChannel2();
-    }, 3600000); // 1 hour = 3600000 ms
-
-    console.log(
-      "🚀 CPU monitoring channels started (every 5 seconds, auto-disconnect after 1 hour)"
-    );
+    console.log("🚀 CPU monitoring channels started (every 5 seconds)");
   }
 
   stopCpuMonitoringChannel1(): void {
