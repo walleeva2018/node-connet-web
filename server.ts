@@ -15,7 +15,6 @@ async function main() {
 
   // Initialize NATS
   await natsService.connect();
-  natsService.startCpuMonitoringChannels();
 
   await server.register(cors, {
     origin: true,
@@ -49,28 +48,6 @@ async function main() {
     routes: database,
   });
 
-  server.register(async function (fastify) {
-    fastify.get("/nats", { websocket: true }, (connection, req) => {
-      console.log("WebSocket client connected");
-
-      // Subscribe to all NATS messages
-      const subscription = natsService.subscribeToAll((subject, data) => {
-        const message = {
-          subject,
-          data,
-          timestamp: new Date().toISOString(),
-        };
-        connection.socket.send(JSON.stringify(message));
-      });
-
-      // Cleanup on disconnect
-      connection.socket.on("close", () => {
-        console.log("WebSocket client disconnected");
-        subscription?.unsubscribe();
-      });
-    });
-  });
-
   // Health check
   server.get("/health", async () => {
     return {
@@ -79,82 +56,6 @@ async function main() {
       nats: natsService.getInfo(),
     };
   });
-
-  // Publish message
-  server.post("/publish", async (request, reply) => {
-    const { subject, data } = request.body as { subject: string; data: any };
-
-    if (!subject || !data) {
-      reply.code(400);
-      return { error: "subject and data are required" };
-    }
-
-    const success = await natsService.publish(subject, data);
-    return success
-      ? { success: true, message: `Published to ${subject}` }
-      : { success: false, error: "NATS not connected" };
-  });
-
-  // Subscribe to ALL messages in real-time
-  server.get("/subscribe", async (request, reply) => {
-    reply.type("text/event-stream");
-    reply.header("Cache-Control", "no-cache");
-    reply.header("Connection", "keep-alive");
-    reply.header("Access-Control-Allow-Origin", "*");
-
-    // Send connection confirmation
-    reply.raw.write(
-      'data: {"type": "connected", "message": "Subscribed to all NATS messages"}\n\n'
-    );
-
-    // Subscribe to NATS and stream to client
-    const subscription = natsService.subscribeToAll((subject, data) => {
-      const event = {
-        subject,
-        data,
-        timestamp: new Date().toISOString(),
-      };
-      reply.raw.write(`data: ${JSON.stringify(event)}\n\n`);
-    });
-
-    // Cleanup on disconnect
-    request.socket.on("close", () => {
-      console.log("📴 Client disconnected from stream");
-      subscription?.unsubscribe();
-    });
-  });
-
-  // Subscribe to specific subject
-  server.get("/subscribe/:subject", async (request, reply) => {
-    const { subject } = request.params as { subject: string };
-
-    reply.type("text/event-stream");
-    reply.header("Cache-Control", "no-cache");
-    reply.header("Connection", "keep-alive");
-    reply.header("Access-Control-Allow-Origin", "*");
-
-    reply.raw.write(
-      `data: {"type": "connected", "message": "Subscribed to ${subject}"}\n\n`
-    );
-
-    const subscription = natsService.subscribeToSubject(
-      subject,
-      (subject, data) => {
-        const event = {
-          subject,
-          data,
-          timestamp: new Date().toISOString(),
-        };
-        reply.raw.write(`data: ${JSON.stringify(event)}\n\n`);
-      }
-    );
-
-    request.socket.on("close", () => {
-      console.log(`📴 Client disconnected from ${subject}`);
-      subscription?.unsubscribe();
-    });
-  });
-
   const port = 8080;
   const host = "localhost";
 
