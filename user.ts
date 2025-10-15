@@ -87,7 +87,7 @@ export default function (router: ConnectRouter) {
   router.service(UserService, {
     fetchUser: async (request: FetchUserRequest) => {
       const user = users[0];
-      const isAuthenticated = false; // Set to false to test 401
+      const isAuthenticated = true; // Set to false to test 401
 
       if (!isAuthenticated) {
         throw new ConnectError("Authentication required", Code.Unauthenticated);
@@ -98,7 +98,7 @@ export default function (router: ConnectRouter) {
       return create(FetchUserResponseSchema, {
         user: create(UserSchema, {
           ...user,
-          id: BigInt(user.id),
+          id: BigInt(user?.id),
           twoFactorMethods: create(TwoFactorMethodsSchema, {
             methods: user.twoFactorMethods,
           }),
