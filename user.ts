@@ -1,5 +1,6 @@
 import type { ConnectRouter } from "@connectrpc/connect";
 import { create } from "@bufbuild/protobuf";
+import { ConnectError, Code } from "@connectrpc/connect";
 import {
   UserService,
   FetchUserRequestSchema,
@@ -86,7 +87,11 @@ export default function (router: ConnectRouter) {
   router.service(UserService, {
     fetchUser: async (request: FetchUserRequest) => {
       const user = users[0];
-      if (!user) throw new Error("User not found");
+      const isAuthenticated = false; // Set to false to test 401
+
+      if (!isAuthenticated) {
+        throw new ConnectError("Authentication required", Code.Unauthenticated);
+      }
 
       // Map user's organization IDs to actual organization objects
 
