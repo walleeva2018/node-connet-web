@@ -1,6 +1,7 @@
 import type { ConnectRouter } from "@connectrpc/connect";
 import { create } from "@bufbuild/protobuf";
 import { ConnectError, Code } from "@connectrpc/connect";
+
 import {
   UserService,
   FetchUserRequestSchema,
@@ -85,11 +86,11 @@ const users = [
 
 export default function (router: ConnectRouter) {
   router.service(UserService, {
-    fetchUser: async (request: FetchUserRequest) => {
+    fetchUser: async (request: FetchUserRequest, context) => {
+      const checker = context.requestHeader.get("X-CSRF-Token");
       const user = users[0];
-      const isAuthenticated = true; // Set to false to test 401
 
-      if (!isAuthenticated) {
+      if (!checker) {
         throw new ConnectError("Authentication required", Code.Unauthenticated);
       }
 
