@@ -24,6 +24,15 @@ enum BudgetType {
   BUDGET_TYPE_CUSTOM = 3;
 }
 
+// Enums for resource types
+enum ResourceType {
+  RESOURCE_TYPE_UNSPECIFIED = 0;
+  RESOURCE_TYPE_ALL = 1;
+  RESOURCE_TYPE_VM = 2;
+  RESOURCE_TYPE_KUBERNETES = 3;
+  RESOURCE_TYPE_DATABASE = 4;
+}
+
 // Resource billing info
 message ResourceBillingInfo {
   int32 instance = 1;
@@ -37,7 +46,7 @@ message CardInfo {
 
 // Billing information
 message BillingInfo {
-  ResourceBillingInfo droplets = 1;
+  ResourceBillingInfo kubernetes = 1;
   ResourceBillingInfo vm = 2;
   ResourceBillingInfo database = 3;
 }
@@ -63,6 +72,7 @@ message BudgetAlert {
   string budget_email = 6;
   double usage = 7;
   string created_at = 8;
+  ResourceType resource_type = 9;
 }
 
 // Get Billing Request/Response
@@ -85,7 +95,6 @@ message GetBillingUsageResponse {
   ResourceUsage kubernetes = 1;
   ResourceUsage vm = 2;
   ResourceUsage database = 3;
-  ResourceUsage droplets = 4;
 }
 
 // Create Budget Alert Request/Response
@@ -95,6 +104,7 @@ message CreateBudgetAlertRequest {
   BudgetType budget_type = 3;
   double budget_limit = 4;
   string budget_email = 5;
+  ResourceType resource_type = 6;
 }
 
 message CreateBudgetAlertResponse {

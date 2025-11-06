@@ -19,6 +19,7 @@ import {
   UsageDataPointSchema,
   BudgetAlertSchema,
   BudgetType,
+  ResourceType,
   type GetBillingRequest,
   type GetBillingUsageRequest,
   type CreateBudgetAlertRequest,
@@ -36,6 +37,7 @@ export const budgetAlerts: Array<{
   budgetEmail: string;
   usage: number;
   createdAt: string;
+  resourceType: ResourceType;
 }> = [
   {
     id: "budget-1",
@@ -46,6 +48,7 @@ export const budgetAlerts: Array<{
     budgetEmail: "alerts@example.com",
     usage: 234.56,
     createdAt: "2025-01-01T00:00:00Z",
+    resourceType: ResourceType.ALL,
   },
   {
     id: "budget-2",
@@ -56,6 +59,7 @@ export const budgetAlerts: Array<{
     budgetEmail: "finance@example.com",
     usage: 1842.33,
     createdAt: "2025-01-01T00:00:00Z",
+    resourceType: ResourceType.ALL,
   },
   {
     id: "budget-3",
@@ -66,6 +70,7 @@ export const budgetAlerts: Array<{
     budgetEmail: "dev-team@example.com",
     usage: 178.90,
     createdAt: "2025-01-15T00:00:00Z",
+    resourceType: ResourceType.KUBERNETES,
   },
 ];
 
@@ -73,23 +78,23 @@ export const budgetAlerts: Array<{
 export const billingData: Record<
   string,
   {
-    droplets: { instance: number; price: number };
+    kubernetes: { instance: number; price: number };
     vm: { instance: number; price: number };
     database: { instance: number; price: number };
   }
 > = {
   "user-uuid-1": {
-    droplets: { instance: 3, price: 45.0 },
+    kubernetes: { instance: 3, price: 45.0 },
     vm: { instance: 1, price: 24.0 },
     database: { instance: 2, price: 30.0 },
   },
   "org-uuid-2": {
-    droplets: { instance: 5, price: 75.0 },
+    kubernetes: { instance: 5, price: 75.0 },
     vm: { instance: 3, price: 72.0 },
     database: { instance: 1, price: 15.0 },
   },
   "org-uuid-1": {
-    droplets: { instance: 2, price: 30.0 },
+    kubernetes: { instance: 2, price: 30.0 },
     vm: { instance: 0, price: 0 },
     database: { instance: 1, price: 15.0 },
   },
@@ -138,7 +143,7 @@ export default function (router: ConnectRouter) {
 
       const userId = request.userId || "user-uuid-1";
       const userBillingData = billingData[userId] || {
-        droplets: { instance: 0, price: 0 },
+        kubernetes: { instance: 0, price: 0 },
         vm: { instance: 0, price: 0 },
         database: { instance: 0, price: 0 },
       };
@@ -149,7 +154,7 @@ export default function (router: ConnectRouter) {
 
       return create(GetBillingResponseSchema, {
         billingInfo: create(BillingInfoSchema, {
-          droplets: create(ResourceBillingInfoSchema, userBillingData.droplets),
+          kubernetes: create(ResourceBillingInfoSchema, userBillingData.kubernetes),
           vm: create(ResourceBillingInfoSchema, userBillingData.vm),
           database: create(ResourceBillingInfoSchema, userBillingData.database),
         }),
@@ -171,7 +176,6 @@ export default function (router: ConnectRouter) {
       const kubernetesData = generateUsageData(timeframe);
       const vmData = generateUsageData(timeframe);
       const databaseData = generateUsageData(timeframe);
-      const dropletsData = generateUsageData(timeframe);
 
       return create(GetBillingUsageResponseSchema, {
         kubernetes: create(ResourceUsageSchema, {
@@ -186,11 +190,6 @@ export default function (router: ConnectRouter) {
         }),
         database: create(ResourceUsageSchema, {
           dataPoints: databaseData.map(([timestamp, cost]) =>
-            create(UsageDataPointSchema, { timestamp: BigInt(timestamp), cost })
-          ),
-        }),
-        droplets: create(ResourceUsageSchema, {
-          dataPoints: dropletsData.map(([timestamp, cost]) =>
             create(UsageDataPointSchema, { timestamp: BigInt(timestamp), cost })
           ),
         }),
@@ -215,9 +214,10 @@ export default function (router: ConnectRouter) {
         budgetEmail: request.budgetEmail,
         usage: 0, // Initial usage is 0
         createdAt: new Date().toISOString(),
+        resourceType: request.resourceType,
       };
 
-      budgetAlerts.push(newAlert);
+      budgetAlerts.push(newAlert as any);
 
       return create(CreateBudgetAlertResponseSchema, {
         budgetAlert: create(BudgetAlertSchema, newAlert),
@@ -250,9 +250,10 @@ export default function (router: ConnectRouter) {
           budgetEmail: "alerts@example.com",
           usage: 234.56,
           createdAt: new Date().toISOString(),
+          resourceType: ResourceType.ALL,
         };
 
-        budgetAlerts.push(mockAlert);
+        budgetAlerts.push(mockAlert as any);
 
         return create(GetBudgetAlertsResponseSchema, {
           budgetAlerts: [create(BudgetAlertSchema, mockAlert)],
