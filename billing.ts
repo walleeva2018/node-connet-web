@@ -1,0 +1,269 @@
+import type { ConnectRouter } from "@connectrpc/connect";
+import { create } from "@bufbuild/protobuf";
+import { ConnectError, Code } from "@connectrpc/connect";
+
+import {
+  BillingService,
+  GetBillingRequestSchema,
+  GetBillingResponseSchema,
+  GetBillingUsageRequestSchema,
+  GetBillingUsageResponseSchema,
+  CreateBudgetAlertRequestSchema,
+  CreateBudgetAlertResponseSchema,
+  GetBudgetAlertsRequestSchema,
+  GetBudgetAlertsResponseSchema,
+  BillingInfoSchema,
+  CardInfoSchema,
+  ResourceBillingInfoSchema,
+  ResourceUsageSchema,
+  UsageDataPointSchema,
+  BudgetAlertSchema,
+  BudgetType,
+  type GetBillingRequest,
+  type GetBillingUsageRequest,
+  type CreateBudgetAlertRequest,
+  type GetBudgetAlertsRequest,
+  type BudgetAlert,
+} from "./gen/billing/v1/billing_pb.js";
+
+// In-memory storage for demo purposes
+export const budgetAlerts: Array<{
+  id: string;
+  userId: string;
+  budgetName: string;
+  budgetType: BudgetType;
+  budgetLimit: number;
+  budgetEmail: string;
+  usage: number;
+  createdAt: string;
+}> = [
+  {
+    id: "budget-1",
+    userId: "user-uuid-1",
+    budgetName: "Monthly Infrastructure Budget",
+    budgetType: BudgetType.MONTHLY,
+    budgetLimit: 500,
+    budgetEmail: "alerts@example.com",
+    usage: 234.56,
+    createdAt: "2025-01-01T00:00:00Z",
+  },
+  {
+    id: "budget-2",
+    userId: "user-uuid-1",
+    budgetName: "Yearly Cloud Budget",
+    budgetType: BudgetType.YEARLY,
+    budgetLimit: 5000,
+    budgetEmail: "finance@example.com",
+    usage: 1842.33,
+    createdAt: "2025-01-01T00:00:00Z",
+  },
+  {
+    id: "budget-3",
+    userId: "org-uuid-2",
+    budgetName: "Development Environment Budget",
+    budgetType: BudgetType.MONTHLY,
+    budgetLimit: 300,
+    budgetEmail: "dev-team@example.com",
+    usage: 178.90,
+    createdAt: "2025-01-15T00:00:00Z",
+  },
+];
+
+// Mock billing data by user
+export const billingData: Record<
+  string,
+  {
+    droplets: { instance: number; price: number };
+    vm: { instance: number; price: number };
+    database: { instance: number; price: number };
+  }
+> = {
+  "user-uuid-1": {
+    droplets: { instance: 3, price: 45.0 },
+    vm: { instance: 1, price: 24.0 },
+    database: { instance: 2, price: 30.0 },
+  },
+  "org-uuid-2": {
+    droplets: { instance: 5, price: 75.0 },
+    vm: { instance: 3, price: 72.0 },
+    database: { instance: 1, price: 15.0 },
+  },
+  "org-uuid-1": {
+    droplets: { instance: 2, price: 30.0 },
+    vm: { instance: 0, price: 0 },
+    database: { instance: 1, price: 15.0 },
+  },
+};
+
+// Mock card data by user
+export const cardData: Record<string, { card4digit: string }> = {
+  "user-uuid-1": {
+    card4digit: "1293",
+  },
+  "org-uuid-2": {
+    card4digit: "4567",
+  },
+  "org-uuid-1": {
+    card4digit: "8901",
+  },
+};
+
+// Helper function to generate usage data based on timeframe
+function generateUsageData(timeframe: string): number[][] {
+  const now = Date.now();
+  let dataPoints: number[][] = [];
+
+  // Parse timeframe (e.g., "7d", "30d", "90d")
+  const days = parseInt(timeframe.replace("d", "")) || 30;
+  const intervalMs = (days * 24 * 60 * 60 * 1000) / 10; // 10 data points
+
+  for (let i = 0; i < 10; i++) {
+    const timestamp = now - (9 - i) * intervalMs;
+    const cost = Math.random() * 50 + 10; // Random cost between 10-60
+    dataPoints.push([timestamp, cost]);
+  }
+
+  return dataPoints;
+}
+
+export default function (router: ConnectRouter) {
+  router.service(BillingService, {
+    // Get billing information
+    getBilling: async (request: GetBillingRequest, context) => {
+      const checker = context.requestHeader.get("X-CSRF-Token");
+
+      if (!checker) {
+        throw new ConnectError("Authentication required", Code.Unauthenticated);
+      }
+
+      const userId = request.userId || "user-uuid-1";
+      const userBillingData = billingData[userId] || {
+        droplets: { instance: 0, price: 0 },
+        vm: { instance: 0, price: 0 },
+        database: { instance: 0, price: 0 },
+      };
+
+      const userCardData = cardData[userId] || {
+        card4digit: "****",
+      };
+
+      return create(GetBillingResponseSchema, {
+        billingInfo: create(BillingInfoSchema, {
+          droplets: create(ResourceBillingInfoSchema, userBillingData.droplets),
+          vm: create(ResourceBillingInfoSchema, userBillingData.vm),
+          database: create(ResourceBillingInfoSchema, userBillingData.database),
+        }),
+        cardInfo: create(CardInfoSchema, userCardData),
+      });
+    },
+
+    // Get billing usage
+    getBillingUsage: async (request: GetBillingUsageRequest, context) => {
+      const checker = context.requestHeader.get("X-CSRF-Token");
+
+      if (!checker) {
+        throw new ConnectError("Authentication required", Code.Unauthenticated);
+      }
+
+      const timeframe = request.timeframe || "30d";
+
+      // Generate mock usage data for each resource type
+      const kubernetesData = generateUsageData(timeframe);
+      const vmData = generateUsageData(timeframe);
+      const databaseData = generateUsageData(timeframe);
+      const dropletsData = generateUsageData(timeframe);
+
+      return create(GetBillingUsageResponseSchema, {
+        kubernetes: create(ResourceUsageSchema, {
+          dataPoints: kubernetesData.map(([timestamp, cost]) =>
+            create(UsageDataPointSchema, { timestamp: BigInt(timestamp), cost })
+          ),
+        }),
+        vm: create(ResourceUsageSchema, {
+          dataPoints: vmData.map(([timestamp, cost]) =>
+            create(UsageDataPointSchema, { timestamp: BigInt(timestamp), cost })
+          ),
+        }),
+        database: create(ResourceUsageSchema, {
+          dataPoints: databaseData.map(([timestamp, cost]) =>
+            create(UsageDataPointSchema, { timestamp: BigInt(timestamp), cost })
+          ),
+        }),
+        droplets: create(ResourceUsageSchema, {
+          dataPoints: dropletsData.map(([timestamp, cost]) =>
+            create(UsageDataPointSchema, { timestamp: BigInt(timestamp), cost })
+          ),
+        }),
+      });
+    },
+
+    // Create budget alert
+    createBudgetAlert: async (request: CreateBudgetAlertRequest, context) => {
+      const checker = context.requestHeader.get("X-CSRF-Token");
+
+      if (!checker) {
+        throw new ConnectError("Authentication required", Code.Unauthenticated);
+      }
+
+      const newAlert: BudgetAlert = {
+        $typeName: "billing.v1.BudgetAlert",
+        id: `budget-${Date.now()}`,
+        userId: request.userId,
+        budgetName: request.budgetName,
+        budgetType: request.budgetType,
+        budgetLimit: request.budgetLimit,
+        budgetEmail: request.budgetEmail,
+        usage: 0, // Initial usage is 0
+        createdAt: new Date().toISOString(),
+      };
+
+      budgetAlerts.push(newAlert);
+
+      return create(CreateBudgetAlertResponseSchema, {
+        budgetAlert: create(BudgetAlertSchema, newAlert),
+        message: "Budget alert created successfully",
+      });
+    },
+
+    // Get budget alerts
+    getBudgetAlerts: async (request: GetBudgetAlertsRequest, context) => {
+      const checker = context.requestHeader.get("X-CSRF-Token");
+
+      if (!checker) {
+        throw new ConnectError("Authentication required", Code.Unauthenticated);
+      }
+
+      // Filter alerts by user ID
+      const userAlerts = budgetAlerts.filter(
+        (alert) => alert.userId === request.userId
+      );
+
+      // If no alerts exist, create some mock data
+      if (userAlerts.length === 0 && request.userId === "user-uuid-1") {
+        const mockAlert: BudgetAlert = {
+          $typeName: "billing.v1.BudgetAlert",
+          id: "budget-1",
+          userId: request.userId,
+          budgetName: "Monthly Infrastructure Budget",
+          budgetType: BudgetType.MONTHLY,
+          budgetLimit: 500,
+          budgetEmail: "alerts@example.com",
+          usage: 234.56,
+          createdAt: new Date().toISOString(),
+        };
+
+        budgetAlerts.push(mockAlert);
+
+        return create(GetBudgetAlertsResponseSchema, {
+          budgetAlerts: [create(BudgetAlertSchema, mockAlert)],
+        });
+      }
+
+      return create(GetBudgetAlertsResponseSchema, {
+        budgetAlerts: userAlerts.map((alert) =>
+          create(BudgetAlertSchema, alert)
+        ),
+      });
+    },
+  });
+}

@@ -1,0 +1,112 @@
+syntax = "proto3";
+package billing.v1;
+
+// Billing service for managing billing information and budgets
+service BillingService {
+  // Get billing information for a user
+  rpc GetBilling(GetBillingRequest) returns (GetBillingResponse);
+
+  // Get billing usage over a timeframe
+  rpc GetBillingUsage(GetBillingUsageRequest) returns (GetBillingUsageResponse);
+
+  // Create a budget alert
+  rpc CreateBudgetAlert(CreateBudgetAlertRequest) returns (CreateBudgetAlertResponse);
+
+  // Get budget alerts for a user
+  rpc GetBudgetAlerts(GetBudgetAlertsRequest) returns (GetBudgetAlertsResponse);
+}
+
+// Enums for budget types
+enum BudgetType {
+  BUDGET_TYPE_UNSPECIFIED = 0;
+  BUDGET_TYPE_MONTHLY = 1;
+  BUDGET_TYPE_YEARLY = 2;
+  BUDGET_TYPE_CUSTOM = 3;
+}
+
+// Resource billing info
+message ResourceBillingInfo {
+  int32 instance = 1;
+  double price = 2;
+}
+
+// Card information
+message CardInfo {
+  string card_4digit = 1;
+}
+
+// Billing information
+message BillingInfo {
+  ResourceBillingInfo droplets = 1;
+  ResourceBillingInfo vm = 2;
+  ResourceBillingInfo database = 3;
+}
+
+// Usage data point
+message UsageDataPoint {
+  int64 timestamp = 1;
+  double cost = 2;
+}
+
+// Usage by resource type
+message ResourceUsage {
+  repeated UsageDataPoint data_points = 1;
+}
+
+// Budget alert
+message BudgetAlert {
+  string id = 1;
+  string user_id = 2;
+  string budget_name = 3;
+  BudgetType budget_type = 4;
+  double budget_limit = 5;
+  string budget_email = 6;
+  double usage = 7;
+  string created_at = 8;
+}
+
+// Get Billing Request/Response
+message GetBillingRequest {
+  string user_id = 1;
+}
+
+message GetBillingResponse {
+  BillingInfo billing_info = 1;
+  CardInfo card_info = 2;
+}
+
+// Get Billing Usage Request/Response
+message GetBillingUsageRequest {
+  string user_id = 1;
+  string timeframe = 2; // e.g., "7d", "30d", "90d"
+}
+
+message GetBillingUsageResponse {
+  ResourceUsage kubernetes = 1;
+  ResourceUsage vm = 2;
+  ResourceUsage database = 3;
+  ResourceUsage droplets = 4;
+}
+
+// Create Budget Alert Request/Response
+message CreateBudgetAlertRequest {
+  string user_id = 1;
+  string budget_name = 2;
+  BudgetType budget_type = 3;
+  double budget_limit = 4;
+  string budget_email = 5;
+}
+
+message CreateBudgetAlertResponse {
+  BudgetAlert budget_alert = 1;
+  string message = 2;
+}
+
+// Get Budget Alerts Request/Response
+message GetBudgetAlertsRequest {
+  string user_id = 1;
+}
+
+message GetBudgetAlertsResponse {
+  repeated BudgetAlert budget_alerts = 1;
+}
