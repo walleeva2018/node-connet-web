@@ -57,9 +57,19 @@ message UsageDataPoint {
   double cost = 2;
 }
 
+// Usage line item with detailed breakdown
+message UsageLineItem {
+  string sku = 1;                // SKU identifier (e.g., "VM Premium Instance")
+  int32 units = 2;               // Number of units consumed
+  double price_per_unit = 3;     // Price per unit
+  double gross_amount = 4;       // Gross amount (units * price_per_unit)
+  double billed_amount = 5;      // Actual billed amount (after discounts/credits)
+}
+
 // Usage by resource type
 message ResourceUsage {
   repeated UsageDataPoint data_points = 1;
+  repeated UsageLineItem line_items = 2;  // Detailed usage breakdown
 }
 
 // Budget alert

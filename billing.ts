@@ -17,6 +17,7 @@ import {
   ResourceBillingInfoSchema,
   ResourceUsageSchema,
   UsageDataPointSchema,
+  UsageLineItemSchema,
   BudgetAlertSchema,
   BudgetType,
   ResourceType,
@@ -113,6 +114,29 @@ export const cardData: Record<string, { card4digit: string }> = {
   },
 };
 
+// Mock usage line items data
+const kubernetesLineItems = [
+  { sku: "Kubernetes Cluster - Standard", units: 720, pricePerUnit: 0.10, grossAmount: 72.00, billedAmount: 72.00 },
+  { sku: "Kubernetes Node - Premium", units: 2160, pricePerUnit: 0.05, grossAmount: 108.00, billedAmount: 108.00 },
+  { sku: "Load Balancer", units: 1, pricePerUnit: 15.00, grossAmount: 15.00, billedAmount: 15.00 },
+  { sku: "Persistent Storage (GB)", units: 500, pricePerUnit: 0.10, grossAmount: 50.00, billedAmount: 50.00 },
+];
+
+const vmLineItems = [
+  { sku: "VM Premium Instance", units: 133, pricePerUnit: 0.0500, grossAmount: 6.65, billedAmount: 0.00 },
+  { sku: "VM Standard Instance", units: 720, pricePerUnit: 0.025, grossAmount: 18.00, billedAmount: 18.00 },
+  { sku: "VM CPU Hours", units: 2880, pricePerUnit: 0.01, grossAmount: 28.80, billedAmount: 28.80 },
+  { sku: "VM Memory (GB-hours)", units: 5760, pricePerUnit: 0.005, grossAmount: 28.80, billedAmount: 28.80 },
+  { sku: "VM Storage (GB)", units: 250, pricePerUnit: 0.08, grossAmount: 20.00, billedAmount: 20.00 },
+];
+
+const databaseLineItems = [
+  { sku: "Database Instance - Standard", units: 720, pricePerUnit: 0.075, grossAmount: 54.00, billedAmount: 54.00 },
+  { sku: "Database Storage (GB)", units: 100, pricePerUnit: 0.15, grossAmount: 15.00, billedAmount: 15.00 },
+  { sku: "Database Backup Storage (GB)", units: 50, pricePerUnit: 0.05, grossAmount: 2.50, billedAmount: 2.50 },
+  { sku: "Database I/O Operations (1M)", units: 10, pricePerUnit: 0.20, grossAmount: 2.00, billedAmount: 2.00 },
+];
+
 // Helper function to generate usage data based on timeframe
 function generateUsageData(timeframe: string): number[][] {
   const now = Date.now();
@@ -182,15 +206,24 @@ export default function (router: ConnectRouter) {
           dataPoints: kubernetesData.map(([timestamp, cost]) =>
             create(UsageDataPointSchema, { timestamp: BigInt(timestamp), cost })
           ),
+          lineItems: kubernetesLineItems.map((item) =>
+            create(UsageLineItemSchema, item)
+          ),
         }),
         vm: create(ResourceUsageSchema, {
           dataPoints: vmData.map(([timestamp, cost]) =>
             create(UsageDataPointSchema, { timestamp: BigInt(timestamp), cost })
           ),
+          lineItems: vmLineItems.map((item) =>
+            create(UsageLineItemSchema, item)
+          ),
         }),
         database: create(ResourceUsageSchema, {
           dataPoints: databaseData.map(([timestamp, cost]) =>
             create(UsageDataPointSchema, { timestamp: BigInt(timestamp), cost })
+          ),
+          lineItems: databaseLineItems.map((item) =>
+            create(UsageLineItemSchema, item)
           ),
         }),
       });
