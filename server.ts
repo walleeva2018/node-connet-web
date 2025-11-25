@@ -8,6 +8,7 @@ import organization from "./organization.js";
 import project from "./project.js";
 import team from "./team.js";
 import database from "./database.js";
+import billing from "./billing.js";
 import natsService from "./nats.js";
 import websocket from "@fastify/websocket";
 async function main() {
@@ -46,6 +47,10 @@ async function main() {
 
   await server.register(fastifyConnectPlugin, {
     routes: database,
+  });
+
+  await server.register(fastifyConnectPlugin, {
+    routes: billing,
   });
 
   // Health check
